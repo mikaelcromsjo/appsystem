@@ -1,50 +1,41 @@
-#About
+# About
 
-This is system web app with a CRM application
+CRM web app — call center workflow, customer/product management, alarm reminders.
 
-# System
+**Stack:** FastAPI · Jinja2 + HTMX + Alpine.js · TailwindCSS (CDN) · SQLite/Postgres
 
-- **Backend:** FastAPI  
-- **Templates:** Jinja2 + [HTMX](https://htmx.org/) + [Alpine.js](https://alpinejs.dev/)  
-- **Styling:** [TailwindCSS](https://tailwindcss.com/) via CDN  
+# Start here
 
-## Functionality
+Load at the beginning of every session:
+- `docs/PATTERNS.md` — how to build features (CRUD, HTMX, filters, WebSocket)
+- `docs/STRUCTURE.md` — full file map + env vars
 
-- Customer and Product management
-- Call Center workflow
-- Alarm reminder system 
+Load when needed:
+- `docs/MODELS.md` — entity relationships
+- `docs/IMPORTS.md` — import layer rules
+- `docs/DOCS.md` — full doc index
 
+# Documentation
 
-## CLAUDE.md
+Compact, AI-optimized. All docs in `docs/` or alongside the file they describe.
 
-## Documentation Location
+Per-file docs (`<file>.py.md`) only for non-obvious files:
+- `backend/core/functions/populate.py.md`
+- `backend/core/functions/filters.py.md`
+- `backend/routers/calls.py.md`
 
-Always write all documentation in a super compact minimal way optimized for AI. 
-
-Documentation is under `docs/`. Each file has its own doc file (<filename>.<ext>.md). Each directory has it own documentation in UPPERCASE about all content. 'templates/TEMPLATES.md'
-
-See `docs/DOCS.md` for the documentation index.
-
-## DOC
-Each larger edit to a file. Update the FUNCTION.md in the same directory as the function lives in. Then update the DIRECTORY.md. 
+Update the relevant `.py.md` and directory doc after any larger edit.
 
 # Claude Code
 
 ## Edit files
-Use unique, short search strings in prompts for precise replacements.
+Use unique, short search strings for precise replacements.
 
 ## Sub agents
-
-Always use sub agents for small jobs that do not need full context.
+Use sub agents for small jobs that do not need full context.
 
 # Python rules
 
-Python: Wrap f-string in parentheses for implicit concatenation.
-
-## Comments and docs
-
+- Wrap f-strings in parentheses for implicit concatenation.
+- Prefer **explicit, readable** code over clever tricks.
 - Delete or update outdated comments; remove dead code.
-
-## Clean code for AI
-
-- Prefer **explicit, readable** code over clever tricks.  
