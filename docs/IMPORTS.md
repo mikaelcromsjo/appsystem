@@ -3,50 +3,53 @@
 Strict layered hierarchy — lower layers never import from higher layers.
 
 ```
-core/models/base.py          # Base = declarative_base()  ← no internal imports
+core/models/base.py        # Base = declarative_base()  ← no deps
         │
-core/models/models.py        # BaseMixin, User, Tag, Update
-        │                    # imports: core.models.base
+models/base.py             # BaseMixin, Update           ← no internal deps
+models/user.py             # User, UserUpdate            ← core.models.base, models.base
+models/tag.py              # Tag, TagLink                ← core.models.base
         │
-core/database.py             # engine, SessionLocal, get_db, init_admin_user
-        │                    # imports: core.models.base (Base)
-        │                    # lazy import: core.models.models.User (inside init_admin_user only)
+core/models/models.py      # re-export shim → models/base, models/user, models/tag
         │
-core/functions/helpers.py    # populate, render, build_filters, utc_to_local, formatPhoneNr
-        │                    # imports: core.models.base, data.constants, templates
+core/database.py           # engine, SessionLocal, get_db, init_admin_user
+        │                  # imports: core.models.base
+        │                  # lazy: core.models.models.User (inside init_admin_user only)
         │
-models/*.py                  # domain ORM models + Pydantic schemas (one file per entity)
-        │                    # imports: core.models.base (Base), core.models.models (BaseMixin)
-        │                    # NEVER import from core.database
+core/functions/
+  datetime_utils.py        # local_to_utc, utc_to_local
+  phone.py                 # formatPhoneNr
+  populate.py              # populate, convert_value_for_field
+  filters.py               # build_filters
+  render.py                # render  ← imports templates
+  helpers.py               # re-export shim (backward compat)
         │
-models/models.py             # compatibility re-export shim only
+models/<entity>.py         # ORM + Pydantic per entity
+        │                  # imports: core.models.base, models.base
+        │                  # NEVER import from core.database
+models/models.py           # re-export shim (backward compat)
         │
-functions/*.py               # domain business logic
-        │                    # imports: models.*, core.functions.helpers, core.database
+functions/<domain>.py      # domain business logic
         │
-scheduler.py                 # alarm background task
-middleware.py                # LanguageMiddleware
-        │                    # imports: core.i18n, templates
+scheduler.py               # alarm background task
+middleware.py              # LanguageMiddleware  ← core.i18n, templates
         │
-routers/*.py                 # HTTP route handlers
-        │                    # imports: models.*, functions.*, core.*, templates
+routers/*.py               # HTTP handlers
         │
-main.py                      # app factory — imports everything, wires it together
+main.py                    # app factory — wires everything
 ```
 
 ## Rules
 
-1. `core/models/base.py` — imports nothing from this project
-2. `core/models/models.py` — imports only from `core.models.base`
-3. `core/database.py` — imports only from `core.models.base`; lazy-import models inside functions
-4. Domain `models/*.py` — import `Base` from `core.models.base`, `BaseMixin` from `core.models.models`; never from `core.database`
-5. `core/functions/helpers.py` — may import `templates` (needed for `render()`); nothing else from app layer
-6. Routers — may import from any layer below them; never from `main.py` or `middleware.py`
-7. `main.py` — only file that wires all layers together
+1. `core/models/base.py` and `models/base.py` — no internal imports
+2. `core/database.py` — only imports `core.models.base`; lazy-import models inside functions
+3. Domain `models/*.py` — import `Base` from `core.models.base`, `BaseMixin` from `models.base`; never from `core.database`
+4. `core/functions/render.py` — only function file that may import `templates`
+5. Routers — may import any layer below; never `main.py` or `middleware.py`
+6. `main.py` — only file that wires all layers together
 
 ## Adding a new entity
 
-1. Create `models/<entity>.py` — imports `Base` from `core.models.base`, `BaseMixin` from `core.models.models`
-2. Add re-export line to `models/models.py`
-3. Create `routers/<entity>.py` with `APIRouter`
+1. `models/<entity>.py` — `Base` from `core.models.base`, `BaseMixin` from `models.base`
+2. Add re-export to `models/models.py`
+3. `routers/<entity>.py` with `APIRouter`
 4. Include router in `main.py`
