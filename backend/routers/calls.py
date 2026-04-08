@@ -567,10 +567,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from jose import jwt, JWTError
 import json
 
-# Secret key for JWT
-JWT_SECRET_KEY = "supersecret-jwt-key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 1
+from core.config import JWT_SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 @router.websocket("/ws")

@@ -1,0 +1,5 @@
+JWT_SECRET_KEY = "supersecret-jwt-key"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 1
+SESSION_SECRET = "super-secret-key"
+SUPPORTED_LANGUAGES = ["sv"]

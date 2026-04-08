@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from pydantic import BaseModel, field_validator
 from sqlalchemy.ext.mutable import MutableDict
 
-from core.database import Base
+from core.models.base import Base
 from typing import Optional, Dict, Any
 
 from passlib.context import CryptContext
