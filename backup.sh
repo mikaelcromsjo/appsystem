@@ -1,64 +1,72 @@
 #!/bin/bash
-# backup_selected.sh
-# Usage: ./backup_selected.sh
-# Backups backend/data and the real Docker DB volume
+# -----------------------------------------
+# FastAPI + Docker volume backup script
+# Backs up:
+#   - demo_app_db volume (SQLite DB)
+#   - backend/data folder
+# -----------------------------------------
 
 set -e
 
-# --- Config ---
-BACKUP_DIR="./backup"
-CONTAINER_NAME="fastapi_htmx_dev"     # container running FastAPI
+### CONFIG ###
+VOLUME_NAME="demo_app_db"        # ✅ YOUR REAL DB VOLUME
 BACKEND_DATA_DIR="./backend/data"
-DATE=$(date +%F_%H%M%S)               # add timestamp to avoid overwriting
-BACKUP_FILE="${BACKUP_DIR}/backupfile-${DATE}.tar.gz"
-MAX_BACKUPS=7                          # keep only latest 7
-OLDER_DIR="${BACKUP_DIR}/older"        # optional older backups
+BACKUP_DIR="./backup"
+MAX_BACKUPS=7
+DATE=$(date +%F_%H%M%S)
+BACKUP_FILE="${BACKUP_DIR}/backup-${DATE}.tar.gz"
+OLDER_DIR="${BACKUP_DIR}/older"
+################
 
-# --- Ensure backup directories exist ---
+echo "Using volume: $VOLUME_NAME"
+
 mkdir -p "$BACKUP_DIR"
 mkdir -p "$OLDER_DIR"
 
-# --- Determine the DB volume mounted in the container ---
-VOLUME_NAME=$(docker inspect $CONTAINER_NAME \
-  --format '{{ range .Mounts }}{{ if eq .Destination "/dbdata" }}{{ .Name }}{{ end }}{{ end }}')
-
-if [ -z "$VOLUME_NAME" ]; then
-  echo "Error: Could not determine DB volume for container $CONTAINER_NAME"
-  exit 1
-fi
-echo "Backing up volume: $VOLUME_NAME"
-
-# --- Temporary directory for combining volume and backend data ---
 TMP_DIR=$(mktemp -d)
 
-# --- Copy backend data ---
-cp -r "$BACKEND_DATA_DIR" "$TMP_DIR/backend_data"
+echo "Temporary dir: $TMP_DIR"
 
-# --- Copy DB volume ---
+# -----------------------------
+# Copy backend data
+# -----------------------------
+if [ -d "$BACKEND_DATA_DIR" ]; then
+  echo "Backing up backend data..."
+  cp -r "$BACKEND_DATA_DIR" "$TMP_DIR/backend_data"
+fi
+
+# -----------------------------
+# Copy Docker volume safely
+# -----------------------------
+echo "Backing up docker volume..."
 docker run --rm \
-  -v ${VOLUME_NAME}:/data \
+  -v ${VOLUME_NAME}:/data:ro \
   -v ${TMP_DIR}:/backup_tmp \
-  busybox \
-  sh -c "cp -r /data /backup_tmp/${VOLUME_NAME}"
+  alpine \
+  sh -c "cp -a /data /backup_tmp/app_db"
 
-# --- Create tar.gz backup ---
+# -----------------------------
+# Create tar.gz
+# -----------------------------
+echo "Creating archive..."
 tar czf "$BACKUP_FILE" -C "$TMP_DIR" .
 
-# --- Clean up temporary directory ---
 rm -rf "$TMP_DIR"
 
-echo "Backup created: $BACKUP_FILE"
+echo "✅ Backup created:"
+echo "$BACKUP_FILE"
 
-# --- Rotate backups ---
-BACKUPS=($(ls -1t ${BACKUP_DIR}/backupfile-*.tar.gz))
-NUM_BACKUPS=${#BACKUPS[@]}
+# -----------------------------
+# Rotate old backups
+# -----------------------------
+BACKUPS=($(ls -1t ${BACKUP_DIR}/backup-*.tar.gz 2>/dev/null || true))
+NUM=${#BACKUPS[@]}
 
-if [ $NUM_BACKUPS -gt $MAX_BACKUPS ]; then
-  for ((i=MAX_BACKUPS; i<NUM_BACKUPS; i++)); do
-    # Move older backups to older/ folder
-    mv "${BACKUPS[$i]}" "${OLDER_DIR}/"
-    echo "Moved old backup to ${OLDER_DIR}/"
+if [ $NUM -gt $MAX_BACKUPS ]; then
+  for ((i=MAX_BACKUPS; i<NUM; i++)); do
+    mv "${BACKUPS[$i]}" "$OLDER_DIR/"
+    echo "Moved old backup: ${BACKUPS[$i]}"
   done
 fi
 
-echo "Backup rotation done. Latest $MAX_BACKUPS backups are kept in $BACKUP_DIR."
+echo "Done."
