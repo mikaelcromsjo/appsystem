@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
@@ -15,8 +16,9 @@ loader = ChoiceLoader([
 templates = Jinja2Templates(directory=str(app_templates_path))
 templates.env.loader = loader
 
-templates.env.cache = {}
-templates.env.auto_reload = True
+if os.environ.get("DEBUG", "false").lower() == "true":
+    templates.env.cache = {}
+    templates.env.auto_reload = True
 
 templates.env.globals["now"] = lambda: datetime.now(timezone.utc)
 templates.env.globals["timedelta"] = timedelta

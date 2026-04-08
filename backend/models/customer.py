@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, field_validator
@@ -67,7 +68,7 @@ class CustomerUpdate(BaseModel):
     filter_g: Optional[bool] = False
     filter_h: Optional[bool] = False
     categories: Optional[List[str]] = []
-    tags: Optional[str] = ""
+    tags: Optional[List[str]] = []
     extra: Optional[Dict[str, Any]] = None
     code_name: Optional[bool] = False
 
@@ -76,3 +77,19 @@ class CustomerUpdate(BaseModel):
         if v:
             return formatPhoneNr(v)
         return v
+
+    @field_validator("tags", mode="before")
+    def parse_tags(cls, v):
+        """Accept Tagify JSON string, plain CSV, or list."""
+        if not v:
+            return []
+        if isinstance(v, list):
+            return [item.get("value", item) if isinstance(item, dict) else item for item in v]
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return [item.get("value", item) if isinstance(item, dict) else item for item in parsed]
+            except json.JSONDecodeError:
+                return [t.strip() for t in v.split(",") if t.strip()]
+        return []

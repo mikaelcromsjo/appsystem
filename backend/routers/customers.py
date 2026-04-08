@@ -190,9 +190,6 @@ async def upsert_customer(
         data_record.caller = caller_instance  # assign the actual SQLAlchemy object
 
 
-    # Normalize CSV: remove extra spaces and surrounding quotes
-    if data_record.tags:
-        data_record.tags = to_comma_string(data_record.tags)
     if data_record.location:
         data_record.location = to_comma_string(data_record.location)
 
