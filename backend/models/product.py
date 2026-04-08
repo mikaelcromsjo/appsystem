@@ -6,7 +6,7 @@ from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String
 from sqlalchemy.ext.mutable import MutableDict
 
 from core.models.base import Base
-from core.models.models import BaseMixin
+from models.base import BaseMixin
 
 
 class Product(BaseMixin, Base):

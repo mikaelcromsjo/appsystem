@@ -9,8 +9,11 @@ __all__ = [
     "Invoice", "InvoiceNumber", "InvoiceUpdate",
     "Product", "ProductUpdate",
     "ProductCustomer",
+    "User", "UserUpdate",
+    "Tag", "TagLink",
 ]
-from core.models.models import Update
+
+from models.base import Update
 from models.alarm import Alarm
 from models.call import Call, CallUpdate
 from models.caller import Caller
@@ -19,3 +22,5 @@ from models.customer import Customer, CustomerUpdate
 from models.invoice import Invoice, InvoiceNumber, InvoiceUpdate
 from models.product import Product, ProductUpdate
 from models.product_customer import ProductCustomer
+from models.user import User, UserUpdate
+from models.tag import Tag, TagLink

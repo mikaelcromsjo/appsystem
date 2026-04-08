@@ -6,7 +6,7 @@ from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import relationship
 
 from core.models.base import Base
-from core.models.models import BaseMixin
+from models.base import BaseMixin
 
 
 class Company(BaseMixin, Base):

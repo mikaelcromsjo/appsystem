@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
 from core.models.base import Base
-from core.models.models import BaseMixin
+from models.base import BaseMixin
 
 
 class Caller(BaseMixin, Base):

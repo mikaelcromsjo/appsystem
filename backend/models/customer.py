@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 
 from core.models.base import Base
 from core.functions.helpers import formatPhoneNr
-from core.models.models import BaseMixin
+from models.base import BaseMixin
 
 
 class Customer(BaseMixin, Base):
