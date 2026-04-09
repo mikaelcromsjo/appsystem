@@ -235,7 +235,20 @@ async def root(request: Request, user=Depends(get_current_user)):
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request, user=Depends(get_current_user)):
+async def dashboard(
+    request: Request,
+    user=Depends(get_current_user),
+    master_db: Session = Depends(get_master_db),
+):
+    # Re-hydrate is_superadmin if session pre-dates this flag
+    if "is_superadmin" not in request.session:
+        global_user_id = request.session.get("global_user_id")
+        if global_user_id:
+            gu = master_db.query(GlobalUser).filter_by(id=global_user_id).first()
+            request.session["is_superadmin"] = bool(gu and gu.is_superadmin)
+        else:
+            request.session["is_superadmin"] = False
+
     return templates.TemplateResponse(
         "base.html",
         {
