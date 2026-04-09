@@ -20,6 +20,7 @@ from models.master import MasterBase
 from middleware import LanguageMiddleware
 from scheduler import alarm_scheduler
 from core.functions.helpers import utc_to_local
+import core.loader as loader
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -64,20 +65,19 @@ async def on_startup():
 from templates import templates
 templates.env.filters["date"] = utc_to_local
 
-# --- Routers ---
-from routers import auth, customers, products, calls, alarms, callers, user, invoices, companies, admin, tags
+# --- Infrastructure routers (always loaded, not verticals) ---
+from routers import auth, user, tags
 
 app.include_router(auth.router)
-app.include_router(tags.router, tags=["tags"])
-app.include_router(customers.router, tags=["customers"])
-app.include_router(products.router, tags=["products"])
-app.include_router(calls.router, tags=["calls"])
-app.include_router(alarms.router, tags=["alarms"])
-app.include_router(callers.router, tags=["callers"])
 app.include_router(user.router, tags=["user"])
-app.include_router(invoices.router, tags=["invoices"])
-app.include_router(companies.router, tags=["companies"])
-app.include_router(admin.router, tags=["admin"])
+app.include_router(tags.router, tags=["tags"])
+
+# --- Vertical routers (discovered from verticals/) ---
+for _router in loader.get_routers():
+    app.include_router(_router)
+
+# --- Expose nav items to all templates ---
+templates.env.globals["nav_verticals"] = loader.get_nav_items()
 
 
 if __name__ == "__main__":

@@ -193,7 +193,7 @@
 
 
   <div
-    x-data="{ is_admin: {{ 1 if is_admin else 0 }}, active: localStorage.getItem('activeTab') || 'customers', loaded: {} }"
+    x-data="{ is_admin: {{ 1 if is_admin else 0 }}, active: localStorage.getItem('activeTab') || '{{ nav_verticals[0].slug if nav_verticals else 'customers' }}', loaded: {} }"
     x-init="
         // Watch active tab and save/load content
         $watch('active', value => {            
@@ -245,44 +245,17 @@
             </form>
           </div>
 
-          <!-- Shared buttons template -->
+          <!-- Shared buttons template — generated from loaded verticals -->
           <template x-ref="navButtons">
-
-
-
-            <button 
-            @click="
-                        active = 'customers';                        
-                    " :class="{'bg-gray-200': active === 'customers'}" class="px-3 py-2 rounded hover:bg-gray-200">
-              {{ "Customers" | t }}
+            {% for v in nav_verticals %}
+            <button
+              {% if v.admin_only %}x-show="is_admin"{% endif %}
+              @click="active = '{{ v.slug }}'"
+              :class="{'bg-gray-200': active === '{{ v.slug }}'}"
+              class="px-3 py-2 rounded hover:bg-gray-200">
+              {{ v.label | t }}
             </button>
-
-            <button 
-                        @click="
-                        active = 'products';
-                    " :class="{'bg-gray-200': active === 'products'}" class="px-3 py-2 rounded hover:bg-gray-200">
-              {{ "Products" | t }}
-            </button>
-
-            <button @click="
-                        active = 'calls';
-                    " :class="{'bg-gray-200': active === 'calls'}" class="px-3 py-2 rounded hover:bg-gray-200">
-              {{ "Call Center" | t }}
-            </button>
-
-            <button @click="
-                        active = 'alarms';
-                    " :class="{'bg-gray-200': active === 'alarms'}" class="px-3 py-2 rounded hover:bg-gray-200">
-              {{ "Alarms" | t }}
-            </button>
-            <button x-show=is_admin @click="
-                        active = 'admin';
-                    " hx-get="{{ url_for('admin_dashboard') }}" hx-target="#admin_content"
-              :class="{'bg-gray-200': active === 'admin'}" class="px-3 py-2 rounded hover:bg-gray-200">
-              {{ "Admin" | t }}
-            </button>
-
-
+            {% endfor %}
           </template>
 
           <!-- Render them -->
@@ -315,38 +288,27 @@
     </header>
 
 
-    <!-- Hidden HTMX triggers -->
+    <!-- Hidden HTMX triggers — one per vertical, fired lazily by Alpine $watch -->
     <div style="display:none">
       <div x-ref="tabContent">
-        <button hx-trigger="load" x-ref="users" hx-get="{{ url_for('user') }}" hx-target="#user_content"
+        <button hx-trigger="load" x-ref="user" hx-get="{{ url_for('user') }}"
+          hx-target="#user_content" hx-push-url="false"></button>
+        {% for v in nav_verticals %}
+        <button hx-trigger="load" x-ref="{{ v.slug }}"
+          hx-get="{{ url_for(v.hx_endpoint) }}"
+          hx-target="#{{ v.content_div_id }}"
           hx-push-url="false"></button>
-        <button hx-trigger="load" x-ref="customers" hx-get="{{ url_for('customers_list') }}"
-          hx-target="#customer_content" hx-push-url="false"></button>
-        <button hx-trigger="load" x-ref="products" hx-get="{{ url_for('products_list') }}" hx-target="#product_content"
-          hx-push-url="false"></button>
-        <button hx-trigger="load" x-ref="calls" hx-get="{{ url_for('calls_dashboard') }}" hx-target="#calls_content"
-          hx-push-url="false"></button>
-        <button hx-trigger="load" x-ref="alarms" hx-get="{{ url_for('alarms_list') }}" hx-target="#alarm_content"
-          hx-push-url="false"></button>
-        <button hx-trigger="load" x-ref="admin" hx-get="{{ url_for('admin_dashboard') }}" hx-target="#admin_content"
-          hx-push-url="false"></button>
+        {% endfor %}
       </div>
     </div>
-    <!-- Main content -->
+    <!-- Main content — one div per vertical -->
     <main class="bg-white mx-auto p-1 w-full">
       <div id="user_content" x-show="active === 'user'" class="bg-white rounded shadow p-4">
       </div>
-      <div id="customer_content" x-show="active === 'customers'" class="bg-white rounded shadow p-4">
+      {% for v in nav_verticals %}
+      <div id="{{ v.content_div_id }}" x-show="active === '{{ v.slug }}'" class="bg-white rounded shadow p-4">
       </div>
-      <div id="product_content" x-show="active === 'products'" class="bg-white rounded shadow p-4">
-      </div>
-      <div id="calls_content" x-show="active === 'calls'" class="bg-white rounded shadow p-4">
-      </div>
-      <div id="alarm_content" x-show="active === 'alarms'" class="bg-white rounded shadow p-4">
-      </div>
-      <div id="admin_content" x-show="active === 'admin'" class="bg-white rounded shadow p-4">
-      </div>
-
+      {% endfor %}
     </main>
   </div>
 
