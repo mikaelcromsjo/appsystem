@@ -192,7 +192,7 @@ def customer_calls(
         {"request": request, "calls": calls},
     )
 
-@router.get("/", response_class=HTMLResponse, name="products_list")
+@router.get("/", response_class=HTMLResponse, name="calls_product_search")
 def products_list(
     request: Request,
     filter: Optional[str] = None,

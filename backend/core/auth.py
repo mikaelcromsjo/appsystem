@@ -22,3 +22,11 @@ def get_current_user(
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     return user
+
+
+def get_current_superadmin(request: Request):
+    """Dependency for routes that require global superadmin access.
+    Reads the is_superadmin flag written to session at login — no DB query needed."""
+    if not request.session.get("is_superadmin"):
+        raise HTTPException(status_code=403, detail="Superadmin access required")
+    return request.session.get("global_user_id")

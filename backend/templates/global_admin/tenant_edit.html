@@ -1,0 +1,57 @@
+<div x-init="
+  $store.modal.title = 'Edit Tenant — {{ tenant.name }}';
+  $store.modal.submit = '';
+"></div>
+
+<form
+  hx-post="/global-admin/tenants/{{ tenant.id }}/edit"
+  hx-target="#global_admin_content"
+  hx-swap="innerHTML"
+  @htmx:after-request="$store.modal.open = false"
+  class="space-y-4 p-2">
+
+  <div>
+    <label class="block text-sm font-medium mb-1">Name</label>
+    <input type="text" name="name" value="{{ tenant.name }}"
+      class="w-full border rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400" required>
+  </div>
+
+  <div>
+    <label class="block text-sm font-medium mb-1">Slug</label>
+    <input type="text" name="slug" value="{{ tenant.slug }}"
+      class="w-full border rounded px-3 py-1.5 font-mono focus:outline-none focus:ring-2 focus:ring-blue-400" required>
+    <p class="text-xs text-gray-400 mt-1">Changing slug invalidates active sessions for this tenant.</p>
+  </div>
+
+  <div>
+    <label class="block text-sm font-medium mb-1">Enabled Verticals</label>
+    <input type="text" name="enabled_verticals" value="{{ tenant.enabled_verticals or '' }}"
+      placeholder="customers,calls,admin  (leave empty = all)"
+      class="w-full border rounded px-3 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+    <p class="text-xs text-gray-400 mt-1">Comma-separated slugs. Empty = all verticals enabled.</p>
+  </div>
+
+  <div class="flex gap-6">
+    <label class="flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" name="active" {% if tenant.active %}checked{% endif %}
+        class="w-4 h-4">
+      <span class="text-sm font-medium">Active</span>
+    </label>
+    <label class="flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" name="require_2fa" {% if tenant.require_2fa %}checked{% endif %}
+        class="w-4 h-4">
+      <span class="text-sm font-medium">Require 2FA email</span>
+    </label>
+  </div>
+
+  <div class="flex gap-2 pt-2">
+    <button type="submit"
+      class="px-4 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
+      Save
+    </button>
+    <button type="button" @click="$store.modal.open = false"
+      class="px-4 py-1.5 border rounded bg-gray-100 hover:bg-gray-200 text-sm">
+      Cancel
+    </button>
+  </div>
+</form>

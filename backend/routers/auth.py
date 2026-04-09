@@ -127,19 +127,26 @@ async def _send_2fa_link(request: Request, master_db: Session, global_user_id: i
 async def _complete_login(request: Request, master_db: Session, global_user_id: int, tenant: Tenant):
     """Set session and redirect to dashboard."""
     from core.database import _get_tenant_engine
+    from core.models.base import Base
     from sqlalchemy.orm import sessionmaker
 
     tenant_engine = _get_tenant_engine(tenant.db_url)
+    # Ensure schema exists (safe on existing DBs — create_all is idempotent)
+    Base.metadata.create_all(bind=tenant_engine)
+
     tenant_db = sessionmaker(bind=tenant_engine)()
     try:
         local_user = tenant_db.query(User).filter_by(global_user_id=global_user_id).first()
         if not local_user:
             raise HTTPException(status_code=403, detail="No local user for this tenant")
+        global_user = master_db.query(GlobalUser).filter_by(id=global_user_id).first()
         request.session["authenticated"] = True
         request.session["admin"] = local_user.admin
         request.session["user"] = local_user.id
         request.session["tenant_slug"] = tenant.slug
         request.session["tenant_db_url"] = tenant.db_url
+        request.session["global_user_id"] = global_user_id
+        request.session["is_superadmin"] = bool(global_user and global_user.is_superadmin)
     finally:
         tenant_db.close()
 
@@ -232,7 +239,20 @@ async def root(request: Request, user=Depends(get_current_user)):
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request, user=Depends(get_current_user)):
+async def dashboard(
+    request: Request,
+    user=Depends(get_current_user),
+    master_db: Session = Depends(get_master_db),
+):
+    # Re-hydrate is_superadmin if session pre-dates this flag
+    if "is_superadmin" not in request.session:
+        global_user_id = request.session.get("global_user_id")
+        if global_user_id:
+            gu = master_db.query(GlobalUser).filter_by(id=global_user_id).first()
+            request.session["is_superadmin"] = bool(gu and gu.is_superadmin)
+        else:
+            request.session["is_superadmin"] = False
+
     return templates.TemplateResponse(
         "base.html",
         {
@@ -240,6 +260,7 @@ async def dashboard(request: Request, user=Depends(get_current_user)):
             "title": "Dashboard",
             "user": user.username,
             "is_admin": user.admin,
+            "is_superadmin": request.session.get("is_superadmin", False),
             "caller": getattr(user.caller, "name", ""),
         },
     )
