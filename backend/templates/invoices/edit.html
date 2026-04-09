@@ -1,4 +1,4 @@
- <div x-init="$store.modal.title = 'Invoice: {{ invoice.name }}'"></div> 
+<div x-init="$store.modal.title = '{{ &quot;Invoice&quot; | t }}{% if invoice.number %} {{ invoice.number }}{% elif invoice.id %} #{{ invoice.id }}{% endif %}'"></div>
  <div x-init="$store.modal.submit = '{{ "Save" | t }}'"></div> 
 
 <form 
@@ -153,10 +153,6 @@
     </table>
 </div>
 <button id="addRow" type="button">{{ "Add Row" | t }}</button>
-    <!-- Submit -->
-    <div class="flex justify-end mt-4">
-        <button type="submit" class="px-3 py-1 bg-blue-500 text-white rounded">{{ "Save" | t }}</button>
-    </div>
 </form>
 
 <script>

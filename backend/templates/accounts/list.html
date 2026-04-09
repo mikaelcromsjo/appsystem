@@ -14,10 +14,11 @@
                 </thead>
                 <tbody>
                     {% for account in accounts %}
-                    <tr hx-get="{{ url_for('account_detail', account_id=account.id) }}?list=short"
-                        hx-target="#accounts-info"
+                    <tr hx-get="{{ url_for('account_detail', account_id=account.id) }}"
+                        hx-target="#modal-container"
                         hx-trigger="click"
-                        class="cursor-pointer hover:bg-gray-100">
+                        class="cursor-pointer hover:bg-gray-100"
+                        @click="$store.modal.open = true">
 
                         <td class="px-2 py-1 border">{{ account.name }}</td>
                         <td class="px-2 py-1 border">{{ account.extra.bank_name or '' }}</td>
@@ -61,8 +62,6 @@
                 {{ "New Account" | t }}
             </button>
         </div>
-        
-        <div class="mt-4" id="accounts-info"></div>
         
     </div>
 </div>

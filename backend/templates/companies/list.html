@@ -17,10 +17,11 @@
             </thead>
             <tbody>
                 {% for company in companies %}
-                <tr hx-get="{{ url_for('company_detail', company_id=company.id) }}?list=short"
-                    hx-target="#company-info"
+                <tr hx-get="{{ url_for('company_detail', company_id=company.id) }}"
+                    hx-target="#modal-container"
                     hx-trigger="click"
-                    class="cursor-pointer hover:bg-gray-100">
+                    class="cursor-pointer hover:bg-gray-100"
+                    @click="$store.modal.open = true">
 
                     <td class="px-2 py-1 border">{{ company.extra.company_name }}</td>
                     <td class="px-2 py-1 border">{{ company.first_name }} {{ company.last_name }}</td>
@@ -67,8 +68,6 @@
 
 
         </div>
-        
-    <div class="mt-4" id="company-info"></div>
         
     </div>
 

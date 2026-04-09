@@ -19,15 +19,15 @@
             <div>
             <tbody>
                 {% for invoice in invoices %}
-                <tr hx-get="{{ url_for('invoice_detail', invoice_id=invoice.id) }}?list=short" 
-                    hx-target="#invoice-info"
+                <tr hx-get="{{ url_for('invoice_detail', invoice_id=invoice.id) }}"
+                    hx-target="#modal-container"
                     hx-trigger="click"
                     :class="{
                             'bg-blue-100 font-bold hover:bg-blue-200 text-blue-600': selectedRow == {{ loop.index }},
                             'bg-white hover:bg-gray-100 text-gray-900': selectedRow != {{ loop.index }}
                         }"
                     class="cursor-pointer"
-                    @click="selectedRow = {{ loop.index  }}"
+                    @click="selectedRow = {{ loop.index }}; $store.modal.open = true"
                     >
                     
                     <td class="px-2 py-1 border">{{ invoice.id }}</td>
@@ -54,8 +54,7 @@
                         @click.stop
                         >
 
-                        <button x-show="{{invoice.extra.status}} == '1' || {{invoice.extra.status}} == '2' && {{ is_admin }} > 0"
-"
+                        <button x-show="'{{invoice.extra.status}}' == '1' || ('{{invoice.extra.status}}' == '2' && {{ is_admin }})"
                             hx-get="{{ url_for('invoice_detail', invoice_id=invoice.id) }}"
                             hx-target="#modal-container"
                             hx-swap="innerHTML"
@@ -94,7 +93,5 @@
                 {{ "New invoice" | t }}
             </button>
         </div>
-    </div>
-    <div class="mt-4" id="invoice-info">
     </div>
 </div>
