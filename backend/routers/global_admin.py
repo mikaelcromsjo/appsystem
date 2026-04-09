@@ -1,0 +1,175 @@
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from sqlalchemy.orm import Session
+from typing import Optional
+
+from core.auth import get_current_superadmin
+from core.database import get_master_db
+from models.master import GlobalUser, LoginToken, Tenant, UserTenant
+from templates import templates
+
+router = APIRouter(
+    prefix="/global-admin",
+    tags=["global_admin"],
+    dependencies=[Depends(get_current_superadmin)],
+)
+
+
+# --- Dashboard ---
+
+@router.get("/", response_class=HTMLResponse, name="global_admin_dashboard")
+async def global_admin_dashboard(request: Request, master_db: Session = Depends(get_master_db)):
+    tenant_count = master_db.query(Tenant).count()
+    user_count = master_db.query(GlobalUser).count()
+    return templates.TemplateResponse(
+        "global_admin/dashboard.html",
+        {"request": request, "tenant_count": tenant_count, "user_count": user_count},
+    )
+
+
+# --- Tenants ---
+
+@router.get("/tenants", response_class=HTMLResponse, name="global_admin_tenants")
+async def tenants_list(request: Request, master_db: Session = Depends(get_master_db)):
+    tenants = master_db.query(Tenant).order_by(Tenant.id).all()
+    return templates.TemplateResponse(
+        "global_admin/tenants.html",
+        {"request": request, "tenants": tenants},
+    )
+
+
+@router.get("/tenants/{tenant_id}/edit", response_class=HTMLResponse, name="global_admin_tenant_edit")
+async def tenant_edit_form(
+    request: Request,
+    tenant_id: int,
+    master_db: Session = Depends(get_master_db),
+):
+    tenant = master_db.query(Tenant).filter_by(id=tenant_id).first()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    return templates.TemplateResponse(
+        "global_admin/tenant_edit.html",
+        {"request": request, "tenant": tenant},
+    )
+
+
+@router.post("/tenants/{tenant_id}/edit", response_class=HTMLResponse)
+async def tenant_edit_save(
+    request: Request,
+    tenant_id: int,
+    name: str = Form(...),
+    slug: str = Form(...),
+    active: Optional[str] = Form(None),
+    require_2fa: Optional[str] = Form(None),
+    enabled_verticals: Optional[str] = Form(None),
+    master_db: Session = Depends(get_master_db),
+):
+    tenant = master_db.query(Tenant).filter_by(id=tenant_id).first()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+
+    tenant.name = name.strip()
+    tenant.slug = slug.strip()
+    tenant.active = active == "on"
+    tenant.require_2fa = require_2fa == "on"
+    tenant.enabled_verticals = enabled_verticals.strip() or None
+    master_db.commit()
+
+    tenants = master_db.query(Tenant).order_by(Tenant.id).all()
+    return templates.TemplateResponse(
+        "global_admin/tenants.html",
+        {"request": request, "tenants": tenants, "saved_id": tenant_id},
+    )
+
+
+# --- Global Users ---
+
+@router.get("/globalusers", response_class=HTMLResponse, name="global_admin_globalusers")
+async def globalusers_list(request: Request, master_db: Session = Depends(get_master_db)):
+    users = master_db.query(GlobalUser).order_by(GlobalUser.id).all()
+    tenants = master_db.query(Tenant).order_by(Tenant.name).all()
+    memberships = {
+        u.id: [
+            link.tenant_id
+            for link in master_db.query(UserTenant).filter_by(global_user_id=u.id).all()
+        ]
+        for u in users
+    }
+    return templates.TemplateResponse(
+        "global_admin/globalusers.html",
+        {"request": request, "users": users, "tenants": tenants, "memberships": memberships},
+    )
+
+
+@router.post("/globalusers/create", response_class=HTMLResponse)
+async def globaluser_create(
+    request: Request,
+    email: str = Form(...),
+    password: str = Form(...),
+    master_db: Session = Depends(get_master_db),
+):
+    existing = master_db.query(GlobalUser).filter_by(email=email.strip()).first()
+    if existing:
+        users = master_db.query(GlobalUser).order_by(GlobalUser.id).all()
+        tenants = master_db.query(Tenant).order_by(Tenant.name).all()
+        memberships = {
+            u.id: [l.tenant_id for l in master_db.query(UserTenant).filter_by(global_user_id=u.id).all()]
+            for u in users
+        }
+        return templates.TemplateResponse(
+            "global_admin/globalusers.html",
+            {"request": request, "users": users, "tenants": tenants,
+             "memberships": memberships, "error": f"Email {email} already exists"},
+        )
+    user = GlobalUser(email=email.strip())
+    user.set_password(password)
+    master_db.add(user)
+    master_db.commit()
+    return await globalusers_list(request, master_db)
+
+
+@router.post("/globalusers/{user_id}/set-superadmin", response_class=HTMLResponse)
+async def globaluser_set_superadmin(
+    request: Request,
+    user_id: int,
+    is_superadmin: Optional[str] = Form(None),
+    master_db: Session = Depends(get_master_db),
+):
+    user = master_db.query(GlobalUser).filter_by(id=user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_superadmin = is_superadmin == "on"
+    master_db.commit()
+    return await globalusers_list(request, master_db)
+
+
+@router.post("/globalusers/{user_id}/assign-tenant", response_class=HTMLResponse)
+async def globaluser_assign_tenant(
+    request: Request,
+    user_id: int,
+    tenant_id: int = Form(...),
+    master_db: Session = Depends(get_master_db),
+):
+    existing = master_db.query(UserTenant).filter_by(
+        global_user_id=user_id, tenant_id=tenant_id
+    ).first()
+    if not existing:
+        master_db.add(UserTenant(global_user_id=user_id, tenant_id=tenant_id))
+        master_db.commit()
+    return await globalusers_list(request, master_db)
+
+
+@router.post("/globalusers/{user_id}/remove-tenant", response_class=HTMLResponse)
+async def globaluser_remove_tenant(
+    request: Request,
+    user_id: int,
+    tenant_id: int = Form(...),
+    master_db: Session = Depends(get_master_db),
+):
+    link = master_db.query(UserTenant).filter_by(
+        global_user_id=user_id, tenant_id=tenant_id
+    ).first()
+    if link:
+        master_db.delete(link)
+        master_db.commit()
+    return await globalusers_list(request, master_db)

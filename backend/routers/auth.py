@@ -135,11 +135,14 @@ async def _complete_login(request: Request, master_db: Session, global_user_id: 
         local_user = tenant_db.query(User).filter_by(global_user_id=global_user_id).first()
         if not local_user:
             raise HTTPException(status_code=403, detail="No local user for this tenant")
+        global_user = master_db.query(GlobalUser).filter_by(id=global_user_id).first()
         request.session["authenticated"] = True
         request.session["admin"] = local_user.admin
         request.session["user"] = local_user.id
         request.session["tenant_slug"] = tenant.slug
         request.session["tenant_db_url"] = tenant.db_url
+        request.session["global_user_id"] = global_user_id
+        request.session["is_superadmin"] = bool(global_user and global_user.is_superadmin)
     finally:
         tenant_db.close()
 
@@ -240,6 +243,7 @@ async def dashboard(request: Request, user=Depends(get_current_user)):
             "title": "Dashboard",
             "user": user.username,
             "is_admin": user.admin,
+            "is_superadmin": request.session.get("is_superadmin", False),
             "caller": getattr(user.caller, "name", ""),
         },
     )

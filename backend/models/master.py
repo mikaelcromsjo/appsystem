@@ -14,6 +14,7 @@ class GlobalUser(MasterBase):
     id = Column(Integer, primary_key=True)
     email = Column(String, unique=True, nullable=False)   # login identity, globally unique
     password_hash = Column(String, nullable=False)
+    is_superadmin = Column(Boolean, default=False, nullable=False)
 
     def verify_password(self, password: str) -> bool:
         return pwd_context.verify(password, self.password_hash)
@@ -31,6 +32,7 @@ class Tenant(MasterBase):
     db_url = Column(String, nullable=False)
     active = Column(Boolean, default=True)
     require_2fa = Column(Boolean, default=True)  # if True: send one-time login link after password
+    enabled_verticals = Column(String, nullable=True)  # comma-separated slugs; None = all enabled
 
 
 class UserTenant(MasterBase):

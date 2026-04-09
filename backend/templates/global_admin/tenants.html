@@ -1,0 +1,63 @@
+<div x-data="{ selectedRow: 0 }">
+
+  <div class="flex items-center gap-3 mb-4">
+    <h2 class="text-lg font-bold">Tenants</h2>
+    <button
+      hx-get="{{ url_for('global_admin_dashboard') }}"
+      hx-target="#global_admin_content"
+      class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200 text-sm">
+      ← Back
+    </button>
+  </div>
+
+  {% if saved_id %}
+  <div class="mb-3 px-3 py-2 bg-green-50 border border-green-200 rounded text-green-700 text-sm">
+    Saved.
+  </div>
+  {% endif %}
+
+  <div class="full-table">
+    <table class="table-fixed w-full border overflow-x-auto">
+      <thead>
+        <tr>
+          <th class="w-[5%] px-2 py-1 border">ID</th>
+          <th class="w-[20%] px-2 py-1 border">Slug</th>
+          <th class="w-[25%] px-2 py-1 border">Name</th>
+          <th class="w-[10%] px-2 py-1 border text-center">Active</th>
+          <th class="w-[10%] px-2 py-1 border text-center">2FA</th>
+          <th class="w-[20%] px-2 py-1 border">Enabled Verticals</th>
+          <th class="w-[10%] px-2 py-1 border text-center">Edit</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tenant in tenants %}
+        <tr
+          :class="{ 'bg-blue-50': selectedRow === {{ loop.index }}, 'hover:bg-gray-50': selectedRow !== {{ loop.index }} }"
+          @click="selectedRow = {{ loop.index }}"
+          class="cursor-pointer">
+          <td class="px-2 py-1 border">{{ tenant.id }}</td>
+          <td class="px-2 py-1 border font-mono text-sm">{{ tenant.slug }}</td>
+          <td class="px-2 py-1 border">{{ tenant.name }}</td>
+          <td class="px-2 py-1 border text-center">
+            {% if tenant.active %}<span class="text-green-600 font-bold">✔</span>{% else %}<span class="text-gray-400">–</span>{% endif %}
+          </td>
+          <td class="px-2 py-1 border text-center">
+            {% if tenant.require_2fa %}<span class="text-blue-600 font-bold">✔</span>{% else %}<span class="text-gray-400">–</span>{% endif %}
+          </td>
+          <td class="px-2 py-1 border text-sm text-gray-600">{{ tenant.enabled_verticals or 'all' }}</td>
+          <td class="px-2 py-1 border text-center" @click.stop>
+            <button
+              hx-get="{{ url_for('global_admin_tenant_edit', tenant_id=tenant.id) }}"
+              hx-target="#modal-container"
+              hx-swap="innerHTML"
+              @click="$store.modal.open = true"
+              class="px-2 py-0.5 border rounded bg-gray-100 hover:bg-gray-200 text-sm">
+              Edit
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

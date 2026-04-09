@@ -73,6 +73,16 @@ def _migrate_master_schema():
             if "require_2fa" not in t_cols:
                 conn.execute(sa.text("ALTER TABLE tenants ADD COLUMN require_2fa BOOLEAN DEFAULT 1"))
                 conn.commit()
+            if "enabled_verticals" not in t_cols:
+                conn.execute(sa.text("ALTER TABLE tenants ADD COLUMN enabled_verticals VARCHAR"))
+                conn.commit()
+
+        # global_users: add is_superadmin
+        if "global_users" in tables:
+            gu_cols = {c["name"] for c in inspector.get_columns("global_users")}
+            if "is_superadmin" not in gu_cols:
+                conn.execute(sa.text("ALTER TABLE global_users ADD COLUMN is_superadmin BOOLEAN DEFAULT 0"))
+                conn.commit()
 
     # login_tokens: create if missing (create_all handles new DBs; this covers existing ones)
     if "login_tokens" not in tables:
@@ -100,9 +110,12 @@ def init_admin_user():
         # Ensure global admin exists
         global_user = master_db.query(GlobalUser).filter_by(email=ADMIN_EMAIL).first()
         if not global_user:
-            global_user = GlobalUser(email=ADMIN_EMAIL)
+            global_user = GlobalUser(email=ADMIN_EMAIL, is_superadmin=True)
             global_user.set_password(ADMIN_PASSWORD)
             master_db.add(global_user)
+            master_db.flush()
+        elif not global_user.is_superadmin:
+            global_user.is_superadmin = True
             master_db.flush()
 
         # Link global admin to default tenant

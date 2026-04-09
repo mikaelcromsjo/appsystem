@@ -193,7 +193,7 @@
 
 
   <div
-    x-data="{ is_admin: {{ 1 if is_admin else 0 }}, active: localStorage.getItem('activeTab') || '{{ nav_verticals[0].slug if nav_verticals else 'customers' }}', loaded: {} }"
+    x-data="{ is_admin: {{ 1 if is_admin else 0 }}, is_superadmin: {{ 1 if is_superadmin else 0 }}, active: localStorage.getItem('activeTab') || '{{ nav_verticals[0].slug if nav_verticals else 'customers' }}', loaded: {} }"
     x-init="
         // Watch active tab and save/load content
         $watch('active', value => {            
@@ -249,7 +249,8 @@
           <template x-ref="navButtons">
             {% for v in nav_verticals %}
             <button
-              {% if v.admin_only %}x-show="is_admin"{% endif %}
+              {% if v.superadmin_only %}x-show="is_superadmin"
+              {% elif v.admin_only %}x-show="is_admin"{% endif %}
               @click="active = '{{ v.slug }}'"
               :class="{'bg-gray-200': active === '{{ v.slug }}'}"
               class="px-3 py-2 rounded hover:bg-gray-200">

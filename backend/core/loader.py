@@ -64,6 +64,7 @@ def get_nav_items() -> list[dict]:
             "hx_endpoint": v.hx_endpoint,
             "content_div_id": v.content_div_id,
             "admin_only": getattr(v, "admin_only", False),
+            "superadmin_only": getattr(v, "superadmin_only", False),
         }
         for v in discover()
     ]
