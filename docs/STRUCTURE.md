@@ -9,6 +9,7 @@ backend/
   state.py         global dicts: active_connections, user_data (WebSocket)
 
   core/
+    loader.py      discover(), get_routers(), get_nav_items() — reads verticals/
     config.py      env-based constants: JWT_SECRET_KEY, SESSION_SECRET,
                    ACCESS_TOKEN_EXPIRE_MINUTES, DEBUG, SUPPORTED_LANGUAGES,
                    SMTP_*, ADMIN_EMAIL, ADMIN_PASSWORD, APP_BASE_URL
@@ -70,6 +71,12 @@ backend/
     constants.py   DEFAULT_TZ, load_json(), *_map dicts (loaded at startup)
     *.json         categories, products, organisations, personalities, filters
 
+  verticals/              plugin vertical packages — each is self-contained
+    <slug>/
+      __init__.py         manifest: slug, label, order, admin_only,
+                          hx_endpoint, content_div_id, get_routers()
+    customers/  products/  calls/  alarms/  invoices/  admin/
+
   scripts/
     manage_users.py    CLI: create/update users
     create_tenant.py   CLI: provision new tenant (master DB + tenant DB + admin user)
@@ -106,3 +113,4 @@ backend/
 | `SMTP_USER` | `""` | |
 | `SMTP_PASSWORD` | `""` | |
 | `SMTP_FROM` | `ADMIN_EMAIL` | sender address |
+| `ENABLED_VERTICALS` | _(all)_ | comma-separated slugs to load, e.g. `customers,calls,admin` |

@@ -95,7 +95,30 @@ db.add(link)
 links = db.query(TagLink).filter_by(object_id=id, object_type="customer").all()
 ```
 
-## 8. Multi-tenant auth flow
+## 8. Adding a new vertical
+
+1. Create `backend/verticals/<slug>/__init__.py` with the manifest:
+   ```python
+   slug = "tickets"
+   label = "Tickets"
+   order = 60          # controls nav position
+   admin_only = False
+
+   hx_endpoint = "tickets_list"    # FastAPI route name
+   content_div_id = "tickets_content"
+
+   def get_routers():
+       from routers import tickets
+       return [tickets.router]
+   ```
+2. Create `backend/routers/tickets.py` with `router = APIRouter(prefix="/tickets")` and a named `tickets_list` route.
+3. Templates go in `backend/templates/tickets/` as normal.
+4. Restart — `core/loader.py` discovers the vertical automatically; nav and content divs appear.
+5. To limit which verticals run: `ENABLED_VERTICALS=customers,calls,tickets`.
+
+No changes to `main.py` or `base.html` needed.
+
+## 9. Multi-tenant auth flow
 
 ```
 POST /login (email + password)
