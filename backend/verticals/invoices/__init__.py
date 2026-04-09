@@ -8,5 +8,5 @@ content_div_id = "invoices_content"
 
 
 def get_routers():
-    from routers import invoices, companies
-    return [invoices.router, companies.router]
+    from routers import invoices
+    return [invoices.router]

@@ -7,7 +7,7 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./scripts:/app/scripts
-      - demo_app_db:/dbdata
+      - appsystem_dbdata:/dbdata
     environment:
       - MASTER_DATABASE_URL=sqlite:////dbdata/master.db
       - DATABASE_URL=sqlite:////dbdata/app.db
@@ -20,5 +20,4 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8010 --proxy-headers --forwarded-allow-ips='*'      
 
 volumes:
-  demo_app_db:
-    external: true
+  appsystem_dbdata:

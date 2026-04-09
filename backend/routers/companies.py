@@ -1,23 +1,13 @@
-from fastapi import APIRouter, Depends, Form, Request, HTTPException, Query
-from fastapi.responses import HTMLResponse, RedirectResponse
-
-from sqlalchemy import Column, Integer, String, JSON
+from fastapi import APIRouter, Depends, Request, HTTPException, Query
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
+from typing import Optional
 
-from pydantic import BaseModel, Field
-
-from typing import List, Optional, Dict, Any
-from typing import Any, Union, Optional, get_origin, get_args
-
-from core.models.base import Base
 from core.database import get_db
-from core.functions.helpers import render
+from core.functions.helpers import render, populate
 from templates import templates
-import data.constants as constants
-from models.models import Company, CompanyUpdate, Team
-from core.functions.helpers import populate, build_filters
-
-from models.models import Update
+from models.models import Company, CompanyUpdate, Caller, Update
+from core.auth import get_current_user
 
 
 # -------------------------------------------------
@@ -32,10 +22,13 @@ router = APIRouter(prefix="/companies", tags=["companies"])
 @router.get("/", response_class=HTMLResponse, name="companies_list")
 def companies_list(
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user)
 ):
 
     query = db.query(Company)
+    if(not user.admin):
+        query = db.query(Company).filter(Company.caller_id == user.caller_id)
     companies = query.all()
 
     return render(
@@ -60,7 +53,7 @@ def company_new(
 
     company = Company.empty()
 
-    query = db.query(Team)
+    query = db.query(Caller)
     callers = query.all()
 
     return templates.TemplateResponse(
@@ -81,6 +74,7 @@ async def upsert_company(
     request: Request,
     update_data: Update,
     db: Session = Depends(get_db),
+    user = Depends(get_current_user)
 ):
 
     # Determine if this is an update or create
@@ -95,6 +89,7 @@ async def upsert_company(
             raise HTTPException(status_code=404, detail="Company not found")
     else:
         data_record = Company()
+        data_record.caller_id = user.caller_id
 
     data_dict = update_data.model_dump()
 
@@ -119,10 +114,10 @@ async def upsert_company(
     print ("caller_id", caller_id)
     # --- Handle relationships AFTER populate ---
     if isinstance(caller_id, int):
-        caller_instance = db.get(Team, int(caller_id))
+        caller_instance = db.get(Caller, int(caller_id))
         print ("instance", caller_instance)
         if not caller_instance:
-            raise HTTPException(status_code=404, detail="Team not found")
+            raise HTTPException(status_code=404, detail="Caller not found")
         data_record.caller = caller_instance  # assign the actual SQLAlchemy object
 
 
@@ -131,7 +126,13 @@ async def upsert_company(
     db.refresh(data_record)
 
     # Render updated list (HTMX swap)
-    companies = db.query(Company).all()
+    query = db.query(Company)
+    if(not user.admin):
+        query = db.query(Company).filter(Company.caller_id == user.caller_id)
+    companies = query.all()
+
+
+
     response =  templates.TemplateResponse(
         "companies/list.html",
         {
@@ -171,7 +172,7 @@ def company_detail(
         company = Company.empty()
 
     callers = (
-        db.query(Team)
+        db.query(Caller)
         .all()
     )
 
@@ -190,10 +191,6 @@ def company_detail(
                 "request": request, 
                 "company": company, 
                 "company_id": company_id, 
-                "categories_map": constants.categories_map,
-                "organisations_map": constants.organisations_map, 
-                "filters_map": constants.filters_map, 
-                "personalities_map": constants.personalities_map, 
                 "callers": callers,
             }
         )
@@ -221,58 +218,3 @@ def delete_company(company_id: str, db: Session = Depends(get_db)):
 
 
 
-@router.get("/filter", response_class=HTMLResponse)
-def company_filter(
-    request: Request,
-    db: Session = Depends(get_db)
-):
-        
-    callers = (
-        db.query(Team)
-        .all()
-    )
-
-    filter_dict = {}
-#    filters = build_filters(data_dict, Company)
-
-    return templates.TemplateResponse(
-        "companies/filter.html",
-        {
-            "request": request, 
-            "filters": filter_dict, 
-            "categories": constants.categories, 
-            "organisations": organisations, 
-            "personalities": personalities, 
-            "callers": callers,
-        }
-    )
-
-from sqlalchemy import or_, and_
-
-@router.post("/set_filter", name="set_filter", response_class=HTMLResponse)
-async def set_filter(
-    request: Request,
-    update_data: Update,
-    db: Session = Depends(get_db),
-):
-    data_dict = update_data.model_dump()
-    print (data_dict)
-
-    # build SQLAlchemy filters
-    filters = build_filters(data_dict, Company)
-
-    # save filters definition (not SQLAlchemy objects) in session
-    request.session["company_filters"] = data_dict  
-
-    # later you can re-run build_filters(request.session["company_filters"], Company)
-
-    query = db.query(Company)
-    filters = build_filters(data_dict, Company)
-    if filters:
-        query = query.filter(*filters)
-    companies = query.all()
-
-    return templates.TemplateResponse(
-        "companies/list.html",
-        {"request": request, "companies": companies}
-    )
