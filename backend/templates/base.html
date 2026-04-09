@@ -235,6 +235,8 @@
         <nav class="hidden md:flex items-center space-x-4">
           <!-- User Info -->
           <div class="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded">
+            {% set tenant_slug = request.session.get("tenant_slug") %}
+            {% if tenant_slug %}<span class="text-xs text-gray-400 font-medium uppercase">{{ tenant_slug }}</span>{% endif %}
             <span>{{ caller }}</span>
             <form method="get" action="/logout" class="inline">
               <button type="submit" class="text-gray-600 hover:text-red-600">
@@ -298,7 +300,7 @@
         <div class="px-4 py-3 space-y-3">
           <!-- User Info -->
           <div class="flex items-center justify-between bg-gray-50 px-3 py-2 rounded">
-            <span>{{ user }} {{ caller }}</span>
+            <span>{% if request.session.get("tenant_slug") %}<span class="text-xs text-gray-400 font-medium uppercase">{{ request.session.get("tenant_slug") }}</span> {% endif %}{{ user }} {{ caller }}</span>
             <form method="get" action="/logout">
               <button type="submit" class="text-sm text-gray-600 hover:text-red-600">
                 {{ "Logout" | t }}

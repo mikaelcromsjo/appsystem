@@ -14,8 +14,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 from core.config import SESSION_SECRET
-from core.database import engine, init_admin_user
+from core.database import engine, master_engine, init_admin_user
 from core.models.base import Base
+from models.master import MasterBase
 from middleware import LanguageMiddleware
 from scheduler import alarm_scheduler
 from core.functions.helpers import utc_to_local
@@ -54,6 +55,7 @@ async def on_startup():
     except Exception as e:
         logger.error(f"❌ Database connection failed: {e}")
         return
+    MasterBase.metadata.create_all(bind=master_engine)
     Base.metadata.create_all(bind=engine)
     init_admin_user()
     asyncio.create_task(alarm_scheduler())

@@ -14,7 +14,7 @@ from core.database import get_db
 from core.functions.helpers import render
 from templates import templates
 import data.constants as constants
-from models.models import Company, CompanyUpdate, Caller
+from models.models import Company, CompanyUpdate, Team
 from core.functions.helpers import populate, build_filters
 
 from models.models import Update
@@ -60,7 +60,7 @@ def company_new(
 
     company = Company.empty()
 
-    query = db.query(Caller)
+    query = db.query(Team)
     callers = query.all()
 
     return templates.TemplateResponse(
@@ -119,10 +119,10 @@ async def upsert_company(
     print ("caller_id", caller_id)
     # --- Handle relationships AFTER populate ---
     if isinstance(caller_id, int):
-        caller_instance = db.get(Caller, int(caller_id))
+        caller_instance = db.get(Team, int(caller_id))
         print ("instance", caller_instance)
         if not caller_instance:
-            raise HTTPException(status_code=404, detail="Caller not found")
+            raise HTTPException(status_code=404, detail="Team not found")
         data_record.caller = caller_instance  # assign the actual SQLAlchemy object
 
 
@@ -171,7 +171,7 @@ def company_detail(
         company = Company.empty()
 
     callers = (
-        db.query(Caller)
+        db.query(Team)
         .all()
     )
 
@@ -228,7 +228,7 @@ def company_filter(
 ):
         
     callers = (
-        db.query(Caller)
+        db.query(Team)
         .all()
     )
 

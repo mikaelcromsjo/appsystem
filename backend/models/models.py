@@ -1,9 +1,10 @@
 # Compatibility re-export — import from domain-specific files instead.
 __all__ = [
     "Update",
+    "Account", "AccountUpdate",
     "Alarm",
     "Call", "CallUpdate",
-    "Caller",
+    "Caller", "Team",
     "Company", "CompanyUpdate",
     "Customer", "CustomerUpdate",
     "Invoice", "InvoiceNumber", "InvoiceUpdate",
@@ -14,9 +15,11 @@ __all__ = [
 ]
 
 from models.base import Update
+from models.account import Account, AccountUpdate
 from models.alarm import Alarm
 from models.call import Call, CallUpdate
-from models.caller import Caller
+from models.caller import Team
+Caller = Team  # backwards-compat alias
 from models.company import Company, CompanyUpdate
 from models.customer import Customer, CustomerUpdate
 from models.invoice import Invoice, InvoiceNumber, InvoiceUpdate

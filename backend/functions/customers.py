@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session, declarative_base
 from typing import List, Optional
-from models.models import Customer, Caller, Call
+from models.models import Customer, Team, Call
 from sqlalchemy.orm import Session, joinedload
 from core.models.base import Base
 from fastapi import Request
@@ -53,9 +53,9 @@ def assign_customers_caller(db: Session, ids: List[int], caller_id: int):
         return 0  # nothing to do
 
     # Validate that caller exists
-    caller = db.query(Caller).filter(Caller.id == caller_id).first()
+    caller = db.query(Team).filter(Team.id == caller_id).first()
     if not caller:
-        raise ValueError(f"Caller with id {caller_id} does not exist.")
+        raise ValueError(f"Team with id {caller_id} does not exist.")
 
     # Perform bulk update safely
     updated_rows = (

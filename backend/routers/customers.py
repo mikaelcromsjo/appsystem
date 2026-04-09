@@ -20,7 +20,7 @@ from templates import templates
 
 import data.constants as constants
 
-from models.models import Customer, CustomerUpdate, Caller, ProductCustomer
+from models.models import Customer, CustomerUpdate, Team, ProductCustomer
 from core.functions.helpers import populate, build_filters
 
 from models.models import Update
@@ -65,7 +65,7 @@ def customers_list(
     user = Depends(get_current_user),
 ):
     customers = get_user_customers(db, request, user)
-    callers = db.query(Caller).all()
+    callers = db.query(Team).all()
 
     return templates.TemplateResponse(
         "customers/list.html",
@@ -184,9 +184,9 @@ async def upsert_customer(
     data_record = populate(data_dict, data_record, CustomerUpdate)
     # --- Handle relationships AFTER populate ---
     if isinstance(caller_id, int):
-        caller_instance = db.get(Caller, int(caller_id))
+        caller_instance = db.get(Team, int(caller_id))
         if not caller_instance:
-            raise HTTPException(status_code=404, detail="Caller not found")
+            raise HTTPException(status_code=404, detail="Team not found")
         data_record.caller = caller_instance  # assign the actual SQLAlchemy object
 
 
@@ -279,7 +279,7 @@ def customer_detail(
         customer = Customer.empty()
         customer.caller_id = user.caller_id
 
-    callers = db.query(Caller).all()
+    callers = db.query(Team).all()
 
     customer.caller_id = int(customer.caller_id) if customer.caller_id is not None else None
 
@@ -372,7 +372,7 @@ def customer_filter(
 ):
         
     callers = (
-        db.query(Caller)
+        db.query(Team)
         .all()
     )
 
@@ -406,7 +406,7 @@ async def set_filter(
     request.session["customer_filters"] = data_dict 
 
     customers = get_user_customers(db, request, user)
-    callers = db.query(Caller).all()
+    callers = db.query(Team).all()
 
     return templates.TemplateResponse(
         "customers/list.html",

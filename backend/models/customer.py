@@ -26,7 +26,7 @@ class Customer(BaseMixin, Base):
     location = Column(String, nullable=True)
     contributes = Column(Integer, nullable=True)
     caller_id = Column(Integer, ForeignKey("callers.id"), nullable=True)
-    caller = relationship("Caller", back_populates="customers")
+    caller = relationship("Team", back_populates="customers")
     comment = Column(String, nullable=True)
     sub_caller = Column(String, nullable=True)
     organisations = Column(JSON, default=[])

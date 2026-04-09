@@ -18,6 +18,7 @@ class Company(BaseMixin, Base):
     email = Column(String, nullable=True)
     phone = Column(String, nullable=True)
     caller_id = Column(Integer, ForeignKey("callers.id"), nullable=True)
+    caller = relationship("Team")
     comment = Column(String, nullable=True)
     extra = Column(MutableDict.as_mutable(JSON), default=dict)
 

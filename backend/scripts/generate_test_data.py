@@ -7,7 +7,7 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 from core.database import SessionLocal
-from models.models import Caller, Customer, Call, Product, ProductCustomer
+from models.models import Team, Customer, Call, Product, ProductCustomer
 from core.models.models import User
 
 # -----------------------------
@@ -38,7 +38,7 @@ def random_date(start, end):
 def create_callers(session: Session, num_callers=5):
     callers, users = [], []
     for i in range(num_callers):
-        caller = Caller(name=f"Caller {i+1}")
+        caller = Team(name=f"Team {i+1}")
         session.add(caller)
         session.commit()  # ensure ID is set
         callers.append(caller)

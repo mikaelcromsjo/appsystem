@@ -16,7 +16,7 @@ from templates import templates
 from core.functions.helpers import local_to_utc, utc_to_local
 
 
-from models.models import Customer, Call, Product, ProductCustomer, Caller, Alarm
+from models.models import Customer, Call, Product, ProductCustomer, Team, Alarm
 from core.functions.helpers import render
 from functions.customers import get_selected_ids, get_customers, SelectedIDs
 
@@ -146,7 +146,7 @@ async def customer_data(
     )
     
     callers = (
-        db.query(Caller)
+        db.query(Team)
         .all()
     )    
 

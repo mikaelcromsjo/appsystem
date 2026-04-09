@@ -15,7 +15,7 @@ class Alarm(BaseMixin, Base):
     product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
     product = relationship("Product")
     caller_id = Column(Integer, ForeignKey("callers.id"), nullable=False)
-    caller = relationship("Caller")
+    caller = relationship("Team")
     date = Column(DateTime, nullable=False)
     reminder = Column(DateTime, nullable=False)
     reminder_sent = Column(DateTime, nullable=True)

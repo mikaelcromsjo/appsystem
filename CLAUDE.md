@@ -39,3 +39,4 @@ Use sub agents for small jobs that do not need full context.
 - Wrap f-strings in parentheses for implicit concatenation.
 - Prefer **explicit, readable** code over clever tricks.
 - Delete or update outdated comments; remove dead code.
+- Always use timezone.utc

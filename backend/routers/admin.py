@@ -1,7 +1,7 @@
 import csv
 from io import StringIO
 from fastapi import UploadFile, Form, File
-from models.models import Customer, Call, Product, Caller
+from models.models import Customer, Call, Product, Team
 from core.functions.helpers import formatPhoneNr
 import json
 from typing import List, Union
@@ -243,15 +243,15 @@ def create_customer_from_row(row: dict, db):
             parts = [p.strip() for p in s.split(",") if p.strip()]
             return [str(p) for p in parts]
             
-# --- Caller handling ---
+# --- Team handling ---
     caller = None
     caller_name = row.get("caller_name")
     if caller_name:
         caller_name = caller_name.strip()
         if caller_name:
-            caller = db.query(Caller).filter(Caller.name == caller_name).first()
+            caller = db.query(Team).filter(Team.name == caller_name).first()
             if not caller:
-                caller = Caller(name=caller_name)
+                caller = Team(name=caller_name)
                 db.add(caller)
                 db.commit()
                 db.refresh(caller)
@@ -285,7 +285,7 @@ def create_customer_from_row(row: dict, db):
         filter_h=_parse_bool(row.get("filter_h")),
         tags=_parse_tags(row.get("tags")),
         extra=row.get("extra") if isinstance(row.get("extra"), dict) else {},
-         # --- Caller link ---
+         # --- Team link ---
         caller_id=caller.id if caller else None,
         caller=caller,        
     )

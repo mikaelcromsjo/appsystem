@@ -9,6 +9,7 @@ services:
       - ./scripts:/app/scripts
       - demo_app_db:/dbdata
     environment:
+      - MASTER_DATABASE_URL=sqlite:////dbdata/master.db
       - DATABASE_URL=sqlite:////dbdata/app.db
       - DEBUG=true
       # Set in production:

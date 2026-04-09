@@ -11,7 +11,7 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 from core.database import SessionLocal
-from models.models import Call, Customer, Product, ProductCustomer, Caller
+from models.models import Call, Customer, Product, ProductCustomer, Team
 
 # -----------------------------
 # MULTI-LANGUAGE SUPPORT (Swedish default)
@@ -19,12 +19,12 @@ from models.models import Call, Customer, Product, ProductCustomer, Caller
 LANG = {
     "en": {
         "calls_over_time": "📞 Calls Over Time",
-        "caller_performance": "📊 Caller Performance",
+        "caller_performance": "📊 Team Performance",
         "product_participation": "🎟️ Product Participation",
         "no_call_data": "No call data found for given filters.",
         "no_product_data": "No product participation data found.",
         "x_date": "Date",
-        "x_caller": "Caller",
+        "x_caller": "Team",
         "x_product": "Product",
         "y_calls": "Number of Calls",
         "y_customers": "Number of Customers",
@@ -102,16 +102,16 @@ def calls_over_time(session: Session, date_from, date_to, caller_name, lang):
         session.query(
             func.date(Call.call_date).label("day"),
             func.count(Call.id).label("count"),
-            Caller.name.label("caller_name"),
+            Team.name.label("caller_name"),
         )
-        .join(Caller, Caller.id == Call.caller_id)
+        .join(Team, Team.id == Call.caller_id)
         .filter(Call.call_date.between(date_from, date_to))
         .group_by("day", "caller_name")
         .order_by("day")
     )
 
     if caller_name and caller_name.lower() != "all":
-        base_query = base_query.filter(Caller.name == caller_name)
+        base_query = base_query.filter(Team.name == caller_name)
 
     data = base_query.all()
     if not data:
@@ -166,16 +166,16 @@ def calls_over_time(session: Session, date_from, date_to, caller_name, lang):
 def caller_performance(session: Session, date_from, date_to, lang):
     query = (
         session.query(
-            Caller.name.label("caller_name"),
+            Team.name.label("caller_name"),
             func.sum(case((Call.status == 1, 1), else_=0)).label("answered"),
             func.sum(case((Call.status == 2, 1), else_=0)).label("no_answer"),
             func.sum(case((Call.status == 3, 1), else_=0)).label("outside"),
             func.count(Call.id).label("total"),
         )
-        .join(Caller, Caller.id == Call.caller_id)
+        .join(Team, Team.id == Call.caller_id)
         .filter(Call.call_date.between(date_from, date_to))
-        .group_by(Caller.name)
-        .order_by(Caller.name)
+        .group_by(Team.name)
+        .order_by(Team.name)
     )
 
     data = query.all()
@@ -212,21 +212,21 @@ def product_participation(session: Session, date_from, date_to, product_type, ca
     base_query = (
         session.query(
             Product.name.label("product_name"),
-            Caller.name.label("caller_name"),
+            Team.name.label("caller_name"),
             func.sum(case((ProductCustomer.status == 1, 1), else_=0)).label("not_interested"),
             func.sum(case((ProductCustomer.status == 2, 1), else_=0)).label("interested"),
             func.sum(case((ProductCustomer.status == 3, 1), else_=0)).label("comming"),
         )
         .join(Product, Product.id == ProductCustomer.product_id)
         .join(Customer, Customer.id == ProductCustomer.customer_id)
-        .join(Caller, Caller.id == Customer.caller_id)
+        .join(Team, Team.id == Customer.caller_id)
         .filter(Product.start_date.between(date_from, date_to))
-        .group_by(Product.name, Caller.name)
+        .group_by(Product.name, Team.name)
         .order_by(Product.start_date)
     )
 
     if caller_name and caller_name.lower() != "all":
-        base_query = base_query.filter(Caller.name == caller_name)
+        base_query = base_query.filter(Team.name == caller_name)
 
     if product_type:
         base_query = base_query.filter(getattr(Product, product_type) == True)

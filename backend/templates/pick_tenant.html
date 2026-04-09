@@ -1,0 +1,28 @@
+{% extends "open_base.html" %}
+
+{% block title %}Select Workspace{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center">
+  <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
+    <h3 class="mb-6 text-center text-2xl font-semibold text-gray-800">Select Workspace</h3>
+
+    <form action="/pick-tenant" method="post" class="space-y-3">
+      {% for tenant in tenants %}
+      <button
+        type="submit"
+        name="tenant_id"
+        value="{{ tenant.id }}"
+        class="w-full rounded-lg border border-gray-200 px-4 py-3 text-left font-medium text-gray-800 hover:bg-indigo-50 hover:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+      >
+        {{ tenant.name }}
+      </button>
+      {% endfor %}
+    </form>
+
+    <div class="mt-6 text-center">
+      <a href="/logout" class="text-sm text-gray-500 hover:text-gray-700">Sign out</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

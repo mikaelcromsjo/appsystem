@@ -17,10 +17,11 @@ class User(BaseMixin, Base):
 
     id = Column(Integer, primary_key=True)
     username = Column(String, unique=True, nullable=False)
-    password_hash = Column(String, nullable=False)
+    password_hash = Column(String, nullable=True)   # kept for migration; auth is in GlobalUser
+    global_user_id = Column(Integer, nullable=True)  # references master.global_users.id (no FK across DBs)
     admin = Column(Integer, default=0)
     caller_id = Column(Integer, ForeignKey("callers.id"), nullable=True)
-    caller = relationship("Caller")
+    caller = relationship("Team")
     extra = Column(MutableDict.as_mutable(JSON), default=dict)
 
     def verify_password(self, password: str) -> bool:

@@ -1,76 +1,147 @@
-import sys, os
+"""
+Create or update a user in a specific tenant.
 
-# Ensure /app/backend is in sys.path (works both inside and outside Docker)
+Usage:
+    python scripts/manage_users.py --tenant <slug> --email <email> [options]
+
+Examples:
+    python scripts/manage_users.py --tenant acme --email john@acme.com --password Secret123 --admin 1 --caller "Main Office"
+    python scripts/manage_users.py --tenant acme --email john@acme.com --caller "Sales"
+
+Writes to both:
+  - master.db: GlobalUser (auth identity, email + password)
+  - tenant DB:  local User (caller, admin flag, team info)
+
+Password is only updated when --password is explicitly passed.
+"""
+
+import os
+import sys
+
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-print("PYTHONPATH:", sys.path)  # <-- debug line
+import models.account   # noqa: F401 — register all models so SQLAlchemy resolves relationships
+import models.alarm     # noqa: F401
+import models.call      # noqa: F401
+import models.caller    # noqa: F401
+import models.company   # noqa: F401
+import models.customer  # noqa: F401
+import models.invoice   # noqa: F401
+import models.product   # noqa: F401
+import models.product_customer  # noqa: F401
+import models.tag       # noqa: F401
 
 from getpass import getpass
-from sqlalchemy.orm import Session
-from models.models import Caller
-from core.database import SessionLocal
-from core.models.models import User
-from passlib.context import CryptContext
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
-# Example usage:
-# docker exec -it fastapi_htmx_dev python /app/backend/scripts/manage_users.py admin_user --password Secret123 --admin 1 --caller "Main Office"
+from models.master import GlobalUser, MasterBase, Tenant, UserTenant
+from models.user import User
+from models.caller import Team
+from core.database import MASTER_DATABASE_URL
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def create_user(username: str, password: str, admin: int = 0, caller_name=None):
-    db: Session = SessionLocal()
+def get_master_db() -> Session:
+    args = {"check_same_thread": False} if MASTER_DATABASE_URL.startswith("sqlite") else {}
+    engine = create_engine(MASTER_DATABASE_URL, connect_args=args)
+    MasterBase.metadata.create_all(bind=engine)
+    return sessionmaker(bind=engine)()
+
+
+def get_tenant_db(tenant: Tenant) -> Session:
+    args = {"check_same_thread": False} if tenant.db_url.startswith("sqlite") else {}
+    engine = create_engine(tenant.db_url, connect_args=args)
+    return sessionmaker(bind=engine)()
+
+
+def manage_user(tenant_slug: str, email: str, password: str | None, admin: int, caller_name: str | None):
+    master_db = get_master_db()
+
+    tenant = master_db.query(Tenant).filter_by(slug=tenant_slug, active=True).first()
+    if not tenant:
+        print(f"❌ Tenant '{tenant_slug}' not found or inactive.")
+        master_db.close()
+        sys.exit(1)
+
+    tenant_db = get_tenant_db(tenant)
+
     try:
-        # Handle caller creation or lookup
+        # --- GlobalUser (master DB) ---
+        global_user = master_db.query(GlobalUser).filter_by(email=email).first()
+        if not global_user:
+            if not password:
+                password = getpass("Password (new user): ")
+            global_user = GlobalUser(email=email)
+            global_user.set_password(password)
+            master_db.add(global_user)
+            master_db.flush()
+            print(f"  Created GlobalUser '{email}'")
+        else:
+            if password:
+                global_user.set_password(password)
+                print(f"  Updated password for '{email}'")
+
+        # Ensure linked to this tenant
+        link = master_db.query(UserTenant).filter_by(
+            global_user_id=global_user.id, tenant_id=tenant.id
+        ).first()
+        if not link:
+            master_db.add(UserTenant(global_user_id=global_user.id, tenant_id=tenant.id))
+            print(f"  Linked '{email}' to tenant '{tenant_slug}'")
+
+        master_db.commit()
+
+        # --- Local User (tenant DB) ---
         caller = None
         if caller_name:
-            caller = db.query(Caller).filter(Caller.name == caller_name).first()
+            caller = tenant_db.query(Team).filter_by(name=caller_name).first()
             if not caller:
-                caller = Caller(name=caller_name)
-                db.add(caller)
-                db.commit()
-                db.refresh(caller)
+                caller = Team(name=caller_name)
+                tenant_db.add(caller)
+                tenant_db.flush()
+                print(f"  Created team '{caller_name}'")
 
-        # Check if user already exists
-        user = db.query(User).filter(User.username == username).first()
-        hashed_password = pwd_context.hash(password)
-
-        if user:
-            # Update only allowed fields
-            user.password_hash = hashed_password
-            user.admin = admin
-            user.caller = caller
-            print(f"User '{username}' already exists — updated caller, password, and admin status ({admin}).")
+        local_user = tenant_db.query(User).filter_by(global_user_id=global_user.id).first()
+        if local_user:
+            local_user.admin = admin
+            if caller is not None:
+                local_user.caller = caller
+            print(f"  Updated local user in '{tenant_slug}' (admin={admin})")
         else:
-            # Create new user
-            user = User(
-                username=username,
-                password_hash=hashed_password,
+            local_user = User(
+                username=email,
                 admin=admin,
-                caller=caller
+                global_user_id=global_user.id,
+                caller=caller,
             )
-            db.add(user)
-            print(f"User '{username}' created successfully with admin={admin}.")
+            tenant_db.add(local_user)
+            print(f"  Created local user in '{tenant_slug}' (admin={admin})")
 
-        db.commit()
+        tenant_db.commit()
+
     except Exception as e:
-        db.rollback()
-        print(f"Error creating or updating user: {e}")
+        master_db.rollback()
+        tenant_db.rollback()
+        print(f"❌ Error: {e}")
+        sys.exit(1)
     finally:
-        db.close()
+        master_db.close()
+        tenant_db.close()
+
+    print(f"\n✅ Done. User '{email}' is ready in tenant '{tenant_slug}'.")
 
 
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Manage users in the system.")
-    parser.add_argument("username", help="Username of the user to create or update")
-    parser.add_argument("--password", help="Password for the user (prompted if omitted)")
-    parser.add_argument("--admin", type=int, default=0, help="Admin level (0=normal user, 1=admin, etc.)")
-    parser.add_argument("--caller", help="Caller name (optional)")
+    parser = argparse.ArgumentParser(description="Create or update a user in a tenant.")
+    parser.add_argument("--tenant", required=True, help="Tenant slug, e.g. acme")
+    parser.add_argument("--email", required=True, help="Email address (globally unique login identity)")
+    parser.add_argument("--password", default=None, help="Password (prompted if omitted for new users)")
+    parser.add_argument("--admin", type=int, default=0, help="Admin flag: 0=normal, 1=admin")
+    parser.add_argument("--caller", default=None, help="Team/caller name (optional)")
 
     args = parser.parse_args()
-
-    password = args.password or getpass("Password: ")
-    create_user(args.username, password, admin=args.admin, caller_name=args.caller)
+    manage_user(args.tenant, args.email, args.password, args.admin, args.caller)
