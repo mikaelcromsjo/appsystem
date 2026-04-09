@@ -1,10 +1,13 @@
+import os
+
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 from typing import Optional
 
 from core.auth import get_current_superadmin
-from core.database import get_master_db
+from core.database import get_master_db, _get_tenant_engine
+from core.models.base import Base
 from models.master import GlobalUser, LoginToken, Tenant, UserTenant
 from templates import templates
 
@@ -35,6 +38,75 @@ async def tenants_list(request: Request, master_db: Session = Depends(get_master
     return templates.TemplateResponse(
         "global_admin/tenants.html",
         {"request": request, "tenants": tenants},
+    )
+
+
+@router.post("/tenants/create", response_class=HTMLResponse, name="global_admin_tenant_create")
+async def tenant_create(
+    request: Request,
+    name: str = Form(...),
+    slug: str = Form(...),
+    require_2fa: Optional[str] = Form(None),
+    master_db: Session = Depends(get_master_db),
+):
+    slug = slug.strip().lower()
+    name = name.strip()
+
+    if master_db.query(Tenant).filter_by(slug=slug).first():
+        tenants = master_db.query(Tenant).order_by(Tenant.id).all()
+        return templates.TemplateResponse(
+            "global_admin/tenants.html",
+            {"request": request, "tenants": tenants, "error": f"Slug '{slug}' already exists"},
+        )
+
+    # Derive DB path from the default DB location, namespaced by slug
+    default_db = os.environ.get("DATABASE_URL", "sqlite:///app.db")
+    if default_db.startswith("sqlite:///"):
+        db_path = default_db.rsplit("/", 1)[0] + f"/{slug}.db"
+        db_url = f"sqlite:///{db_path.lstrip('sqlite:///')}"
+    else:
+        # Postgres: use same server, different DB name — admin must create the DB manually
+        db_url = default_db.rsplit("/", 1)[0] + f"/{slug}"
+
+    tenant = Tenant(slug=slug, name=name, db_url=db_url, require_2fa=require_2fa == "on")
+    master_db.add(tenant)
+    master_db.flush()
+
+    # Provision schema in the new tenant DB
+    tenant_engine = _get_tenant_engine(db_url)
+    Base.metadata.create_all(bind=tenant_engine)
+
+    # Seed the requesting superadmin as a local user in the new tenant
+    global_user_id = request.session.get("global_user_id")
+    if global_user_id:
+        master_db.add(UserTenant(global_user_id=global_user_id, tenant_id=tenant.id))
+
+        from models.caller import Team
+        from core.models.models import User
+        tenant_db = sessionmaker(bind=tenant_engine)()
+        try:
+            global_user = master_db.query(GlobalUser).filter_by(id=global_user_id).first()
+            team = Team(name="Admin")
+            tenant_db.add(team)
+            tenant_db.flush()
+            local_user = User(
+                username=global_user.email,
+                password_hash="",
+                admin=1,
+                global_user_id=global_user_id,
+                caller_id=team.id,
+            )
+            tenant_db.add(local_user)
+            tenant_db.commit()
+        finally:
+            tenant_db.close()
+
+    master_db.commit()
+
+    tenants = master_db.query(Tenant).order_by(Tenant.id).all()
+    return templates.TemplateResponse(
+        "global_admin/tenants.html",
+        {"request": request, "tenants": tenants, "saved_id": tenant.id},
     )
 
 

@@ -127,9 +127,13 @@ async def _send_2fa_link(request: Request, master_db: Session, global_user_id: i
 async def _complete_login(request: Request, master_db: Session, global_user_id: int, tenant: Tenant):
     """Set session and redirect to dashboard."""
     from core.database import _get_tenant_engine
+    from core.models.base import Base
     from sqlalchemy.orm import sessionmaker
 
     tenant_engine = _get_tenant_engine(tenant.db_url)
+    # Ensure schema exists (safe on existing DBs — create_all is idempotent)
+    Base.metadata.create_all(bind=tenant_engine)
+
     tenant_db = sessionmaker(bind=tenant_engine)()
     try:
         local_user = tenant_db.query(User).filter_by(global_user_id=global_user_id).first()
