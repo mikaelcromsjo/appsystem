@@ -3,7 +3,7 @@
     <div id="invoice-list">
             <div class="full-table">
 
-        <table class="table-auto w-full border overflow-x-auto">
+        <table class="table-auto w-full border overflow-x-auto" x-data="{ selectedRow: 0 }">
             <thead>
                 <tr>
                     <th class="px-2 py-1 border">{{ "Invoice ID" | t }}</th>
@@ -12,16 +12,18 @@
                     <th class="px-2 py-1 border">{{ "Note" | t }}</th>
                     <th class="px-2 py-1 border">{{ "Company" | t }}</th>
                     <th class="px-2 py-1 border">{{ "Status" | t }}</th>
+                    <th x-show="is_admin" class="px-2 py-1 border">{{ "User" | t }}</th>
                     <th class="px-2 py-1 border">{{ "Commands" | t }}</th>
                 </tr>
             </thead>
+            <div>
             <tbody>
                 {% for invoice in invoices %}
                 <tr hx-get="{{ url_for('invoice_detail', invoice_id=invoice.id) }}?list=short" 
                     hx-target="#invoice-info"
                     hx-trigger="click"
                     :class="{
-                            'bg-blue-100 font-bold hover:bg-blue-200 text-blue-600': selectedRow === {{ loop.index }},
+                            'bg-blue-100 font-bold hover:bg-blue-200 text-blue-600': selectedRow == {{ loop.index }},
                             'bg-white hover:bg-gray-100 text-gray-900': selectedRow != {{ loop.index }}
                         }"
                     class="cursor-pointer"
@@ -30,7 +32,7 @@
                     
                     <td class="px-2 py-1 border">{{ invoice.id }}</td>
                     <td class="px-2 py-1 border">{{ invoice.number }}</td>
-                    <td class="px-2 py-1 border">{{ invoice.date.strftime('%Y-%m-%d')  }}</td>
+                    <td class="px-2 py-1 border">{{ invoice.date.strftime('%Y-%m-%d') }}</td>
                     <td class="px-2 py-1 border">{{ invoice.note }}</td>
                     <td class="px-2 py-1 border">
                     {{ invoice.company.extra.company_name if invoice.company else '' }} </td>  
@@ -42,10 +44,11 @@
                     {% elif invoice.extra.status == '2' %}
                         {% set status = "OK" | t %}
                     {% elif invoice.extra.status == '3' %}
-                        {% set status = "Canceled" | t %}
+                        {% set status = "Cancelled" | t %}
                     {% endif %}
                     
                     <td class="px-2 py-1 border">{{ status }}</td>
+                    <td x-show="is_admin" class="px-2 py-1 border">{{ invoice.caller.name }}</td>
 
                <td class="px-2 py-1 border text-center" 
                         @click.stop
@@ -69,7 +72,7 @@
                         >
                             {{ "Delete" | t }}
                         </button>
-<button x-show="{{invoice.extra.status}} == '2'" @click="window.open('{{ url_for('invoice_detail', invoice_id=invoice.id) }}?list=pdf', '_blank')">
+<button x-show="{{invoice.extra.status}} == '2' || {{invoice.extra.status}} == '3'" @click="window.open('{{ url_for('invoice_detail', invoice_id=invoice.id) }}?list=pdf', '_blank')">
     {{ "PDF" | t }}
 </button>      
 
@@ -78,6 +81,7 @@
                 </tr>
                 {% endfor %}
             </tbody>
+            </div>
         </table>
             </div>
         <div class="mt-2 flex gap-2">
