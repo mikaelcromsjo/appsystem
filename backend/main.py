@@ -17,6 +17,9 @@ from core.config import SESSION_SECRET
 from core.database import engine, master_engine, init_admin_user
 from core.models.base import Base
 from models.master import MasterBase
+import models.account, models.alarm, models.call, models.caller, models.company  # noqa: F401
+import models.customer, models.invoice, models.product, models.product_customer  # noqa: F401
+import models.tag, models.user  # noqa: F401
 from middleware import LanguageMiddleware
 from scheduler import alarm_scheduler
 from core.functions.helpers import utc_to_local

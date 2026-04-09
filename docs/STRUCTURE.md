@@ -45,7 +45,7 @@ backend/
     caller.py      Team  (table: callers; has account_id FK)
     company.py     Company, CompanyUpdate
     customer.py    Customer, CustomerUpdate  (tags validator built-in)
-    invoice.py     Invoice, InvoiceNumber, InvoiceUpdate
+    invoice.py     Invoice, InvoiceNumber, InvoiceUpdate  (caller_id FK → Team)
     product.py     Product, ProductUpdate
     product_customer.py  ProductCustomer (M2M junction)
     models.py      re-export shim (backward compat)
@@ -106,7 +106,7 @@ backend/
 | `SESSION_SECRET` | `super-secret-key` | change in production |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | WS token lifetime |
 | `ADMIN_EMAIL` | `admin@localhost` | seeded on first start |
-| `ADMIN_PASSWORD` | `changeme` | seeded on first start |
+| `ADMIN_PASSWORD` | `1234` | seeded on first start |
 | `APP_BASE_URL` | `http://localhost:8010` | used in 2FA email links |
 | `SMTP_HOST` | `""` | leave empty to disable email |
 | `SMTP_PORT` | `587` | |

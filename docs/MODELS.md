@@ -42,7 +42,7 @@ Tag ──< TagLink (polymorphic: object_id + object_type string)
 | `Product` | products | has many ProductCustomers |
 | `ProductCustomer` | product_customers | M2M: Customer ↔ Product, with status |
 | `Company` | companies | has many Invoices |
-| `Invoice` | invoices | belongs to Company |
+| `Invoice` | invoices | belongs to Company; optional Team (caller_id) |
 | `User` | users | optional Team link; `global_user_id` soft-refs GlobalUser |
 | `Tag` | tags | linked via TagLink |
 | `TagLink` | tag_links | polymorphic: (object_id, object_type) |
@@ -51,7 +51,7 @@ Tag ──< TagLink (polymorphic: object_id + object_type string)
 
 - `extra` — `MutableDict JSON` on every model; use for extensible fields without migrations
 - `status` — `Integer` on Call (call outcome) and ProductCustomer (attendance state)
-- `caller_id` — FK on Customer, Call, Alarm, User pointing to `callers` (Team) table
+- `caller_id` — FK on Customer, Call, Alarm, User, Invoice pointing to `callers` (Team) table
 - `global_user_id` — on User; soft cross-DB reference to `master.global_users.id`
 - `filter_a…filter_h` — 8 boolean columns on Customer (legacy; prefer `extra` for new fields)
 - `type_a…type_h` — 8 boolean columns on Product (legacy; prefer `extra` for new fields)

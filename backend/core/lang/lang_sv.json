@@ -227,5 +227,19 @@
   "Invoice ID": "Invoice ID",
   "Processing": "Processing",
   "OK": "OK",
-  "Canceled": "Canceled"
+  "Canceled": "Canceled",
+  "Global Admin": "Global Admin",
+  "Cancelled": "Cancelled",
+  "Accounts": "Accounts",
+  "Account": "Account",
+  "Group": "Group",
+  "New Account": "New Account",
+  "Contact": "Contact",
+  "Account Name": "Account Name",
+  "VAT Number": "VAT Number",
+  "BIC": "BIC",
+  "Company Details": "Company Details",
+  "Postal": "Postal",
+  "Ok": "Ok",
+  "Price (ex. VAT)": "Price (ex. VAT)"
 }
