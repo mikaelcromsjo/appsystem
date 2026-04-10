@@ -113,12 +113,12 @@
     <!-- Caller (Select) -->
     <div>
         <label class="block font-semibold">{{ "Caller" | t }}</label>
-        <select name="caller_id" multiple class="border p-1 w-full">
-            {% for caller in callers %}
-              <option value="{{ caller.id }}" {% if caller.id|string in filter_dict.get('caller', []) %}selected{% endif %}>{{ caller.name }}</option>
+        <select name="team_id" multiple class="border p-1 w-full">
+            {% for team in callers %}
+              <option value="{{ team.id }}" {% if team.id|string in filter_dict.get('caller', []) %}selected{% endif %}>{{ team.name }}</option>
             {% endfor %}
         </select>
-        <select name="caller_id_type" class="border p-1 mt-1">
+        <select name="team_id_type" class="border p-1 mt-1">
             <option value="has">{{ "Has any" | t }}</option>
             <option value="has-all">{{ "Has all" | t }}</option>
             <option value="exact">{{ "Exact" | t }}</option>

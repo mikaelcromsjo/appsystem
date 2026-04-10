@@ -196,7 +196,7 @@ async def create_user(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
-    caller_id: int = Form(None),
+    team_id: int = Form(None),
     db: Session = Depends(get_db),
     master_db: Session = Depends(get_master_db),
 ):
@@ -218,7 +218,7 @@ async def create_user(
     master_db.commit()
 
     # Create local User in tenant DB
-    new_user = User(username=email, caller_id=caller_id, global_user_id=global_user.id)
+    new_user = User(username=email, team_id=team_id, global_user_id=global_user.id)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -261,6 +261,6 @@ async def dashboard(
             "user": user.username,
             "is_admin": user.admin,
             "is_superadmin": request.session.get("is_superadmin", False),
-            "caller": getattr(user.caller, "name", ""),
+            "team": getattr(user.team, "name", ""),
         },
     )

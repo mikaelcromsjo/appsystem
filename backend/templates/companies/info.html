@@ -7,8 +7,8 @@
             <p><strong>{{ "ID" | t }}:</strong> {{ company.id }}</p>
             <p><strong>{{ "Email" | t }}:</strong> {{ company.email or '' }}</p>
             <p><strong>{{ "Phone" | t }}:</strong> {{ company.phone or '' }}</p>
-            {% if company.caller %}
-            <p><strong>{{ "Caller" | t }}:</strong> {{ company.caller.name }}</p>
+            {% if company.team %}
+            <p><strong>{{ "Caller" | t }}:</strong> {{ company.team.name }}</p>
             {% endif %}
             {% if company.comment %}
             <p><strong>{{ "Comment" | t }}:</strong> {{ company.comment }}</p>

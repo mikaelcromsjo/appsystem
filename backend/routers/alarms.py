@@ -45,7 +45,7 @@ def alarms_list(
     today = datetime.now(timezone.utc)
     alarms = (
         db.query(Alarm)
-        .filter((Alarm.caller_id == user.caller_id) & (Alarm.date >= today))
+        .filter((Alarm.team_id == user.team_id) & (Alarm.date >= today))
         .all()
     )
 

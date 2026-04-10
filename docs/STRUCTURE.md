@@ -42,10 +42,10 @@ backend/
     tag.py         Tag, TagLink (polymorphic tagging)
     alarm.py       Alarm
     call.py        Call, CallUpdate
-    caller.py      Team  (table: callers; has account_id FK)
+    caller.py      Team  (table: teams; has account_id FK)
     company.py     Company, CompanyUpdate
     customer.py    Customer, CustomerUpdate  (tags validator built-in)
-    invoice.py     Invoice, InvoiceNumber, InvoiceUpdate  (caller_id FK → Team)
+    invoice.py     Invoice, InvoiceNumber, InvoiceUpdate  (team_id FK → Team)
     product.py     Product, ProductUpdate
     product_customer.py  ProductCustomer (M2M junction)
     models.py      re-export shim (backward compat)
@@ -57,7 +57,7 @@ backend/
     products.py    /products/*
     calls.py       /calls/* + WebSocket /calls/ws  ← see calls.py.md
     alarms.py      /alarms/*
-    callers.py     /callers/*
+    teams.py     /teams/*
     invoices.py    /invoices/*
     companies.py   /companies/*
     tags.py        /tags/*
@@ -65,7 +65,7 @@ backend/
     admin.py       /admin/*
 
   functions/
-    customers.py   get_user_customers(), get_selected_ids(), assign_customers_caller()
+    customers.py   get_user_customers(), get_selected_ids(), assign_customers_team()
 
   data/
     constants.py   DEFAULT_TZ, load_json(), *_map dicts (loaded at startup)

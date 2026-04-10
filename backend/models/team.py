@@ -7,11 +7,11 @@ from models.base import BaseMixin
 
 
 class Team(BaseMixin, Base):
-    __tablename__ = "callers"
+    __tablename__ = "teams"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
     account = relationship("Account")
     extra = Column(MutableDict.as_mutable(JSON), default=dict)
-    customers = relationship("Customer", back_populates="caller")
+    customers = relationship("Customer", back_populates="team")

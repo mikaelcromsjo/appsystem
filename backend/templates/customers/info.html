@@ -38,8 +38,8 @@
 
 
 
-{% if customer.caller is not none %}
-<div class="mb-1"><strong>{{ "Caller" | t }}:</strong> {{ customer.caller.name }}</div>
+{% if customer.team is not none %}
+<div class="mb-1"><strong>{{ "Caller" | t }}:</strong> {{ customer.team.name }}</div>
 {% endif %}
 
 {% if customer.sub_caller %}

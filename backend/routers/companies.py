@@ -6,7 +6,7 @@ from typing import Optional
 from core.database import get_db
 from core.functions.helpers import render, populate
 from templates import templates
-from models.models import Company, CompanyUpdate, Caller, Update
+from models.models import Company, CompanyUpdate, Team, Update
 from core.auth import get_current_user
 from data.constants import CmsConfig, get_cms_config
 
@@ -29,7 +29,7 @@ def companies_list(
 
     query = db.query(Company)
     if(not user.admin):
-        query = db.query(Company).filter(Company.caller_id == user.caller_id)
+        query = db.query(Company).filter(Company.team_id == user.team_id)
     companies = query.all()
 
     return render(
@@ -55,8 +55,8 @@ def company_new(
 
     company = Company.empty()
 
-    query = db.query(Caller)
-    callers = query.all()
+    query = db.query(Team)
+    teams = query.all()
 
     return templates.TemplateResponse(
         "companies/edit.html",
@@ -65,7 +65,7 @@ def company_new(
             "company": company, 
             "mode": "edit",
             "categories": cms.categories,
-            "callers": callers, 
+            "teams": teams, 
         }
     )
 
@@ -91,7 +91,7 @@ async def upsert_company(
             raise HTTPException(status_code=404, detail="Company not found")
     else:
         data_record = Company()
-        data_record.caller_id = user.caller_id
+        data_record.team_id = user.team_id
 
     data_dict = update_data.model_dump()
 
@@ -107,20 +107,20 @@ async def upsert_company(
             del data_dict[key]  # optionally clean up the flat key
             
     # --- Temporarily remove relationships before populate ---
-    caller_id = (data_dict.pop("caller_id", None))  # remove 'caller' from dict
-    if caller_id:
-        caller_id = int(caller_id)
+    team_id = (data_dict.pop("team_id", None))  # remove 'team' from dict
+    if team_id:
+        team_id = int(team_id)
 
     # Populate DB model dynamically (everything except relationships)
     data_record = populate(data_dict, data_record, CompanyUpdate)
-    print ("caller_id", caller_id)
+    print ("team_id", team_id)
     # --- Handle relationships AFTER populate ---
-    if isinstance(caller_id, int):
-        caller_instance = db.get(Caller, int(caller_id))
-        print ("instance", caller_instance)
-        if not caller_instance:
-            raise HTTPException(status_code=404, detail="Caller not found")
-        data_record.caller = caller_instance  # assign the actual SQLAlchemy object
+    if isinstance(team_id, int):
+        team_instance = db.get(Team, int(team_id))
+        print ("instance", team_instance)
+        if not team_instance:
+            raise HTTPException(status_code=404, detail="Team not found")
+        data_record.team = team_instance  # assign the actual SQLAlchemy object
 
 
     db.add(data_record)
@@ -130,7 +130,7 @@ async def upsert_company(
     # Render updated list (HTMX swap)
     query = db.query(Company)
     if(not user.admin):
-        query = db.query(Company).filter(Company.caller_id == user.caller_id)
+        query = db.query(Company).filter(Company.team_id == user.team_id)
     companies = query.all()
 
 
@@ -173,12 +173,12 @@ def company_detail(
     else:
         company = Company.empty()
 
-    callers = (
+    teams = (
         db.query(Caller)
         .all()
     )
 
-    company.caller_id = int(company.caller_id) if company.caller_id is not None else None
+    company.team_id = int(company.team_id) if company.team_id is not None else None
 
     print(company.to_dict())
 
@@ -193,7 +193,7 @@ def company_detail(
                 "request": request, 
                 "company": company, 
                 "company_id": company_id, 
-                "callers": callers,
+                "teams": teams,
             }
         )
     else:

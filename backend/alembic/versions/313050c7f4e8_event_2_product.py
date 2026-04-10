@@ -22,7 +22,10 @@ def upgrade():
     # Disable foreign key checks (SQLite requires this)
     op.execute("PRAGMA foreign_keys=OFF;")
 
-    conn = op.get_bind().connection
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    conn = bind.connection
     tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()
     table_names = [t[0] for t in tables]
 
@@ -32,13 +35,19 @@ def upgrade():
     if 'event_customers' in table_names:
         op.execute("ALTER TABLE event_customers RENAME TO product_customers;")
 
-    # --- Rename columns in product_customers ---
-    with op.batch_alter_table("product_customers") as batch_op:
-        batch_op.alter_column("event_id", new_column_name="product_id")
+    # --- Rename columns in product_customers (if event_id exists) ---
+    if 'product_customers' in table_names or 'event_customers' in table_names:
+        existing_cols = [c["name"] for c in inspector.get_columns("product_customers")]
+        if "event_id" in existing_cols:
+            with op.batch_alter_table("product_customers") as batch_op:
+                batch_op.alter_column("event_id", new_column_name="product_id")
 
-    # --- Rename column in alarms ---
-    with op.batch_alter_table("alarms") as batch_op:
-        batch_op.alter_column("event_id", new_column_name="product_id")
+    # --- Rename column in alarms (if event_id exists) ---
+    if 'alarms' in table_names:
+        existing_cols = [c["name"] for c in inspector.get_columns("alarms")]
+        if "event_id" in existing_cols:
+            with op.batch_alter_table("alarms") as batch_op:
+                batch_op.alter_column("event_id", new_column_name="product_id")
 
     # Re-enable foreign keys
     op.execute("PRAGMA foreign_keys=ON;")

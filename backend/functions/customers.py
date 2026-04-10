@@ -34,7 +34,7 @@ def get_customers(db: Session, user, ids: List[int]) -> List[Customer]:
     """
     query = db.query(Customer)
     if user.admin != 1:
-        query = query.filter(Customer.caller_id == user.caller.id)
+        query = query.filter(Customer.team_id == user.team.id)
     if ids:
         query = query.filter(Customer.id.in_(ids))
     query = query.order_by(
@@ -43,25 +43,25 @@ def get_customers(db: Session, user, ids: List[int]) -> List[Customer]:
     )
     return query.all()
 
-def assign_customers_caller(db: Session, ids: List[int], caller_id: int):
+def assign_customers_team(db: Session, ids: List[int], team_id: int):
     """
-    Assign multiple customers to a given caller.
-    Ensures caller exists (even if in another DB) and updates customers safely.
+    Assign multiple customers to a given team.
+    Ensures team exists (even if in another DB) and updates customers safely.
     """
 
     if not ids:
         return 0  # nothing to do
 
-    # Validate that caller exists
-    caller = db.query(Team).filter(Team.id == caller_id).first()
-    if not caller:
-        raise ValueError(f"Team with id {caller_id} does not exist.")
+    # Validate that team exists
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if not team:
+        raise ValueError(f"Team with id {team_id} does not exist.")
 
     # Perform bulk update safely
     updated_rows = (
         db.query(Customer)
         .filter(Customer.id.in_(ids))
-        .update({Customer.caller_id: caller_id}, synchronize_session="fetch")
+        .update({Customer.team_id: team_id}, synchronize_session="fetch")
     )
 
     db.commit()
@@ -72,7 +72,7 @@ def get_user_customers(db, request, user):
     query = db.query(Customer)
 
     if user.admin != 1:
-        query = query.filter(Customer.caller_id == user.caller_id)
+        query = query.filter(Customer.team_id == user.team_id)
 
     filter_dict = request.session.get("customer_filters", {})
     filters = build_filters(filter_dict, Customer)

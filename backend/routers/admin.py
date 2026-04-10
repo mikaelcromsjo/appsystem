@@ -49,17 +49,17 @@ ALLOWED_SCRIPTS = {
 
 SCRIPT_EXAMPLES = {
     "manage_users": [
-        "Skapa en vanlig användare med lösenord och anropare Kalle<br>kalle --password hemlighet --caller \"Kalle\"",
-        "Skapa en administratörsanvändare med lösenord och anropare Admin<br>admin --password hemlighet --caller \"Admin\" --admin 1",
+        "Skapa en vanlig användare med lösenord och team Kalle<br>kalle --password hemlighet --team \"Kalle\"",
+        "Skapa en administratörsanvändare med lösenord och team Admin<br>admin --password hemlighet --team \"Admin\" --admin 1",
         "Visa hjälp för kommandot<br>--help"
     ],
     "stats": [
         "Rita grafen 'calls_over_time' för daglig statistik (standardrange)<br>--chart calls_over_time",
-        "Rita grafen 'caller_performance' för månadens statistik<br>--chart caller_performance",
+        "Rita grafen 'team_performance' för månadens statistik<br>--chart team_performance",
         "Rita grafen 'product_participation' för vecka 2025-10-01 till 2025-10-07<br>--from 2025-10-01 --to 2025-10-07 --chart product_participation",
-        "Visa daglig statistik för anropare Kalle<br>--caller Kalle --chart calls_over_time",
+        "Visa daglig statistik för team Kalle<br>--team Kalle --chart calls_over_time",
         "Visa statistik för producttyp type_a under oktober<br>--from 2025-10-01 --to 2025-10-31 --product-type type_a --chart calls_over_time",
-        "Generera rapport på engelska<br>--lang en --chart caller_performance"
+        "Generera rapport på engelska<br>--lang en --chart team_performance"
     ],
     "test_data": [
         "Skapa testdata: användare, ringhistorik mm<br>"  # args empty
@@ -244,17 +244,17 @@ def create_customer_from_row(row: dict, db):
             return [str(p) for p in parts]
             
 # --- Team handling ---
-    caller = None
-    caller_name = row.get("caller_name")
-    if caller_name:
-        caller_name = caller_name.strip()
-        if caller_name:
-            caller = db.query(Team).filter(Team.name == caller_name).first()
-            if not caller:
-                caller = Team(name=caller_name)
-                db.add(caller)
+    team = None
+    team_name = row.get("team_name")
+    if team_name:
+        team_name = team_name.strip()
+        if team_name:
+            team = db.query(Team).filter(Team.name == team_name).first()
+            if not team:
+                team = Team(name=team_name)
+                db.add(team)
                 db.commit()
-                db.refresh(caller)
+                db.refresh(team)
 
     new_customer = Customer(
         user_id=row.get("user_id") or "",
@@ -285,9 +285,9 @@ def create_customer_from_row(row: dict, db):
         filter_h=_parse_bool(row.get("filter_h")),
         tags=_parse_tags(row.get("tags")),
         extra=row.get("extra") if isinstance(row.get("extra"), dict) else {},
-         # --- Team link ---
-        caller_id=caller.id if caller else None,
-        caller=caller,        
+        # --- Team link ---
+        team_id=team.id if team else None,
+        team=team,
     )
 
     return new_customer

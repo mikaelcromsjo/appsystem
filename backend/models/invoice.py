@@ -20,8 +20,8 @@ class Invoice(BaseMixin, Base):
 
     id = Column(Integer, primary_key=True, index=True)
     number = Column(Integer, nullable=True)
-    caller_id = Column(Integer, ForeignKey("callers.id"), nullable=True)
-    caller = relationship("Team")
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
+    team = relationship("Team")
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)
     company = relationship("Company")
     date = Column(DateTime, nullable=True)
@@ -30,7 +30,7 @@ class Invoice(BaseMixin, Base):
 
 class InvoiceUpdate(BaseModel):
     number: Optional[int] = None
-    caller_id: Optional[int] = None
+    team_id: Optional[int] = None
     company_id: Optional[int] = None
     date: Optional[datetime] = None
     extra: Optional[Dict[str, Any]] = None

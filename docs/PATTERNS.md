@@ -77,7 +77,7 @@ scheduler.py → queries due alarms → sends JSON payload to active connections
 
 ```python
 # Create an unsaved instance with type-inferred empty values
-customer = Customer.empty(user_id="1", caller_id=2)
+customer = Customer.empty(user_id="1", team_id=2)
 # Useful for pre-populating create forms
 return render("customers/edit.html", {"request": request, "customer": customer})
 ```

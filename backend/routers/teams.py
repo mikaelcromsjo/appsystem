@@ -1,4 +1,4 @@
-# app/routers/calls.py
+# app/routers/teams.py
 
 from fastapi import APIRouter, Depends, Request, Form, Query, HTTPException
 from fastapi.responses import JSONResponse
@@ -20,25 +20,25 @@ from functions.customers import get_selected_ids, get_customers, get_user_custom
 router = APIRouter(prefix="/calls", tags=["calls"])
 
 # Create Team
-@router.post("/admin/callers")
-def create_caller(name: str, db: Session = Depends(get_db)):
-    caller = Team(name=name)
-    db.add(caller)
+@router.post("/admin/teams")
+def create_team(name: str, db: Session = Depends(get_db)):
+    team = Team(name=name)
+    db.add(team)
     db.commit()
-    db.refresh(caller)
-    return caller
+    db.refresh(team)
+    return team
 
 # List Teams
-@router.get("/admin/callers")
-def list_callers(db: Session = Depends(get_db)):
+@router.get("/admin/teams")
+def list_teams(db: Session = Depends(get_db)):
     return db.query(Team).all()
 
 # Delete Team
-@router.delete("/admin/callers/{caller_id}")
-def delete_caller(caller_id: int, db: Session = Depends(get_db)):
-    caller = db.query(Team).get(caller_id)
-    if not caller:
+@router.delete("/admin/teams/{team_id}")
+def delete_team(team_id: int, db: Session = Depends(get_db)):
+    team = db.query(Team).get(team_id)
+    if not team:
         raise HTTPException(status_code=404, detail="Team not found")
-    db.delete(caller)
+    db.delete(team)
     db.commit()
-    return {"status": "deleted", "caller_id": caller_id}
+    return {"status": "deleted", "team_id": team_id}

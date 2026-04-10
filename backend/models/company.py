@@ -17,8 +17,8 @@ class Company(BaseMixin, Base):
     last_name = Column(String, nullable=False)
     email = Column(String, nullable=True)
     phone = Column(String, nullable=True)
-    caller_id = Column(Integer, ForeignKey("callers.id"), nullable=True)
-    caller = relationship("Team")
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
+    team = relationship("Team")
     comment = Column(String, nullable=True)
     extra = Column(MutableDict.as_mutable(JSON), default=dict)
 
@@ -29,5 +29,5 @@ class CompanyUpdate(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     comment: Optional[str] = None
-    caller: Optional[int] = None
+    team: Optional[int] = None
     extra: Optional[Dict[str, Any]] = None

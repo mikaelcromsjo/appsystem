@@ -146,10 +146,10 @@ async def customer_data(
         .first()
     )
     
-    callers = (
+    teams = (
         db.query(Team)
         .all()
-    )    
+    )
 
     # Limit to 50 calls
     calls = db.query(Call).filter(Call.customer_id == int(customer_id)).order_by(desc(Call.id)).limit(50).all()
@@ -157,13 +157,13 @@ async def customer_data(
     return templates.TemplateResponse(
         "calls/customer_calls.html",
         {
-            "request": request, 
+            "request": request,
             "customer": customer,
             "categories_map": cms.categories_map,
             "organisations_map": cms.organisations_map,
             "filters_map": cms.filters_map,
             "personalities_map": cms.personalities_map,
-            "callers": callers,
+            "teams": teams,
             "customer": customer,
             "calls": calls
         }
@@ -186,7 +186,7 @@ def customer_calls(
     # Capture all query parameters as a dict
     query_params = dict(request.query_params)
 
-    calls = db.query(Call).filter(Call.caller_id == int(customer_id)).all()
+    calls = db.query(Call).filter(Call.team_id == int(customer_id)).all()
 
     return templates.TemplateResponse(
         "calls/call_log.html",
@@ -321,12 +321,12 @@ async def save_call(
         # Try to find existing alarm for this user & customer
         alarm = (
             db.query(Alarm)
-            .filter_by(customer_id=customer_id, caller_id=user.caller_id, product_id=product_id)
+            .filter_by(customer_id=customer_id, team_id=user.team_id, product_id=product_id)
             .first()
         )
 
         if not alarm:
-            alarm = Alarm(customer_id=customer_id, caller_id=user.caller_id)
+            alarm = Alarm(customer_id=customer_id, team_id=user.team_id)
             db.add(alarm)
         else:
             print(f"Alarm found: {alarm.id}")
@@ -403,8 +403,8 @@ async def save_call(
             call.id = None  # let DB auto-generate if using Integer PK
             db.add(call)
 
-        # set caller_id from logged in user
-        call.caller_id = user.caller_id
+        # set team_id from logged in user
+        call.team_id = user.team_id
 
         if (not call.note):
             call.note=""

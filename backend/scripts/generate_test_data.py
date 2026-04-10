@@ -13,7 +13,7 @@ from core.models.models import User
 # -----------------------------
 # CONFIG (base numbers)
 # -----------------------------
-CUSTOMERS_PER_CALLER = 50
+CUSTOMERS_PER_TEAM = 50
 CALLS_PER_CUSTOMER = 200
 PRODUCTS_COUNT = 10
 PRODUCT_CUSTOMERS_PER_PRODUCT = 30
@@ -35,36 +35,36 @@ def random_date(start, end):
 # -----------------------------
 # CREATE CALLERS AND USERS
 # -----------------------------
-def create_callers(session: Session, num_callers=5):
-    callers, users = [], []
-    for i in range(num_callers):
-        caller = Team(name=f"Team {i+1}")
-        session.add(caller)
+def create_teams(session: Session, num_teams=5):
+    teams, users = [], []
+    for i in range(num_teams):
+        team = Team(name=f"Team {i+1}")
+        session.add(team)
         session.commit()  # ensure ID is set
-        callers.append(caller)
+        teams.append(team)
 
-        # Create test user for this caller
-        user = User(username=f"user_{caller.id}", caller_id=caller.id, admin=0)
+        # Create test user for this team
+        user = User(username=f"user_{team.id}", team_id=team.id, admin=0)
         user.set_password("password123")
         session.add(user)
         session.commit()
         users.append(user)
 
-    print(f"Created {len(callers)} callers and {len(users)} users")
-    return callers, users
+    print(f"Created {len(teams)} teams and {len(users)} users")
+    return teams, users
 
 # -----------------------------
 # CREATE CUSTOMERS
 # -----------------------------
-def create_customers(session: Session, callers, users):
+def create_customers(session: Session, teams, users):
     customers = []
-    for caller, user in zip(callers, users):
-        num_customers = randomize(CUSTOMERS_PER_CALLER)
+    for team, user in zip(teams, users):
+        num_customers = randomize(CUSTOMERS_PER_TEAM)
         for i in range(num_customers):
             cust = Customer(
                 first_name=f"First{i}",
                 last_name=f"Last{i}",
-                caller_id=caller.id,
+                team_id=team.id,
                 user_id=user.id,
                 email=f"user{i}@example.com"
             )
@@ -86,7 +86,7 @@ def create_calls(session: Session, customers):
             status = random.choices([1,2,3], weights=[0.7,0.2,0.1])[0]  # more answered calls
             call = Call(
                 customer_id=cust.id,
-                caller_id=cust.caller_id,
+                team_id=cust.team_id,
                 call_date=call_date,
                 status=status,
                 note="Test call"
@@ -141,8 +141,8 @@ def create_product_customers(session: Session, products, customers):
 def main():
     session = SessionLocal()
     try:
-        callers, users = create_callers(session)
-        customers = create_customers(session, callers, users)
+        teams, users = create_teams(session)
+        customers = create_customers(session, teams, users)
         create_calls(session, customers)
         products = create_products(session)
         create_product_customers(session, products, customers)

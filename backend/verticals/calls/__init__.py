@@ -8,5 +8,5 @@ content_div_id = "calls_content"
 
 
 def get_routers():
-    from routers import calls, callers
-    return [calls.router, callers.router]
+    from routers import calls, teams
+    return [calls.router, teams.router]

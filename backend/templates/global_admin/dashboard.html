@@ -13,6 +13,12 @@
     class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200">
     Global Users
   </button>
+  <button
+    hx-get="{{ url_for('global_admin_scripts') }}"
+    hx-target="#global_admin_content"
+    class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200">
+    Scripts
+  </button>
 </div>
 
 <br/>

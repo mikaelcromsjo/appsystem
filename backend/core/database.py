@@ -128,7 +128,7 @@ def init_admin_user():
         master_db.commit()
 
         # Ensure default Team exists in tenant DB
-        from models.caller import Team
+        from models.team import Team
         default_team = tenant_db.query(Team).filter_by(name="Admin").first()
         if not default_team:
             default_team = Team(name="Admin")
@@ -139,12 +139,12 @@ def init_admin_user():
         local_user = tenant_db.query(User).filter_by(global_user_id=global_user.id).first()
         if not local_user:
             local_user = User(username=ADMIN_EMAIL, password_hash="", admin=1,
-                              global_user_id=global_user.id, caller_id=default_team.id)
+                              global_user_id=global_user.id, team_id=default_team.id)
             tenant_db.add(local_user)
             tenant_db.commit()
             print(f"✅ Admin created: {ADMIN_EMAIL} / {ADMIN_PASSWORD}")
-        elif local_user.caller_id is None:
-            local_user.caller_id = default_team.id
+        elif local_user.team_id is None:
+            local_user.team_id = default_team.id
             tenant_db.commit()
 
     finally:

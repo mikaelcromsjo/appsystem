@@ -19,7 +19,7 @@ from models.models import Call, Customer, Product, ProductCustomer, Team
 LANG = {
     "en": {
         "calls_over_time": "📞 Calls Over Time",
-        "caller_performance": "📊 Team Performance",
+        "team_performance": "📊 Team Performance",
         "product_participation": "🎟️ Product Participation",
         "no_call_data": "No call data found for given filters.",
         "no_product_data": "No product participation data found.",
@@ -41,7 +41,7 @@ LANG = {
     },
     "sv": {
         "calls_over_time": "📞 Samtal över tid",
-        "caller_performance": "📊 Uppringar­prestation",
+        "team_performance": "📊 Uppringar­prestation",
         "product_participation": "🎟️ Produktinformation",
         "no_call_data": "Inga samtalsdata hittades för givna filter.",
         "no_product_data": "Ingen produktdata hittades.",
@@ -70,11 +70,11 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Generate Call Center Statistics (HTML/Plotly)")
     parser.add_argument("--from", dest="date_from", required=False, help="Start date (YYYY-MM-DD)")
     parser.add_argument("--to", dest="date_to", required=False, help="End date (YYYY-MM-DD)")
-    parser.add_argument("--caller", help="Filter by caller name")
+    parser.add_argument("--team", help="Filter by caller name")
     parser.add_argument("--product-type", choices=["type_a", "type_b", "type_c", "type_d", "type_e", "type_f", "type_g"], help="Filter products by type")
     parser.add_argument("--chart", choices=[
         "calls_over_time",
-        "caller_performance",
+        "team_performance",
         "product_participation",
     ], required=True)
 #    parser.add_argument("--save", help="Path to save the HTML file", default="/app/backend/core/static/output.html")
@@ -104,7 +104,7 @@ def calls_over_time(session: Session, date_from, date_to, caller_name, lang):
             func.count(Call.id).label("count"),
             Team.name.label("caller_name"),
         )
-        .join(Team, Team.id == Call.caller_id)
+        .join(Team, Team.id == Call.team_id)
         .filter(Call.call_date.between(date_from, date_to))
         .group_by("day", "caller_name")
         .order_by("day")
@@ -163,7 +163,7 @@ def calls_over_time(session: Session, date_from, date_to, caller_name, lang):
     return fig
 
 
-def caller_performance(session: Session, date_from, date_to, lang):
+def team_performance(session: Session, date_from, date_to, lang):
     query = (
         session.query(
             Team.name.label("caller_name"),
@@ -172,7 +172,7 @@ def caller_performance(session: Session, date_from, date_to, lang):
             func.sum(case((Call.status == 3, 1), else_=0)).label("outside"),
             func.count(Call.id).label("total"),
         )
-        .join(Team, Team.id == Call.caller_id)
+        .join(Team, Team.id == Call.team_id)
         .filter(Call.call_date.between(date_from, date_to))
         .group_by(Team.name)
         .order_by(Team.name)
@@ -197,7 +197,7 @@ def caller_performance(session: Session, date_from, date_to, lang):
 
     fig.update_layout(
         barmode="group",
-        title=f"{lang['caller_performance']}<br><sup>{date_from.date()} → {date_to.date()}</sup>",
+        title=f"{lang['team_performance']}<br><sup>{date_from.date()} → {date_to.date()}</sup>",
         xaxis_title=lang["x_caller"],
         yaxis_title=lang["y_calls"],
         template="plotly_white",
@@ -219,7 +219,7 @@ def product_participation(session: Session, date_from, date_to, product_type, ca
         )
         .join(Product, Product.id == ProductCustomer.product_id)
         .join(Customer, Customer.id == ProductCustomer.customer_id)
-        .join(Team, Team.id == Customer.caller_id)
+        .join(Team, Team.id == Customer.team_id)
         .filter(Product.start_date.between(date_from, date_to))
         .group_by(Product.name, Team.name)
         .order_by(Product.start_date)
@@ -339,8 +339,8 @@ def main():
     try:
         if args.chart == "calls_over_time":
             fig = calls_over_time(session, date_from, date_to, args.caller, lang)
-        elif args.chart == "caller_performance":
-            fig = caller_performance(session, date_from, date_to, lang)
+        elif args.chart == "team_performance":
+            fig = team_performance(session, date_from, date_to, lang)
         elif args.chart == "product_participation":
             fig = product_participation(session, date_from, date_to, args.product_type, args.caller, lang)
         else:

@@ -25,7 +25,7 @@ from templates import templates
 from core.database import engine
 from core.models.base import Base
 from models.models import Invoice, InvoiceUpdate, InvoiceNumber
-from models.models import Update, Company, Caller
+from models.models import Update, Company, Team
 from core.functions.helpers import populate
 from core.auth import get_current_user
 from datetime import date
@@ -45,11 +45,11 @@ PDF_DIR.mkdir(exist_ok=True)
 # Helpers
 # -----------------------------
 
-def get_invoice_data(caller: Caller) -> dict:
-    """Build invoice sender data from caller's extra fields."""
-    extra = caller.extra or {}
+def get_invoice_data(team: Team) -> dict:
+    """Build invoice sender data from team's extra fields."""
+    extra = team.extra or {}
     return {
-        "name":           caller.name,
+        "name":           team.name,
         "address_line1":  extra.get("address_line1", ""),
         "address_line2":  extra.get("address_line2", ""),
         "postal_code":    extra.get("postal_code", ""),
@@ -99,11 +99,11 @@ def create_pdf(invoice_id: int, db: Session) -> Path:
     if not invoice:
         raise ValueError(f"Invoice {invoice_id} not found")
 
-    caller = db.get(Caller, invoice.caller_id)  # fetch directly from invoice
-    if not caller:
-        raise ValueError(f"Caller not found for invoice {invoice_id}")
+    team = db.get(Team, invoice.team_id)  # fetch directly from invoice
+    if not team:
+        raise ValueError(f"Team not found for invoice {invoice_id}")
 
-    invoice_data = get_invoice_data(caller)
+    invoice_data = get_invoice_data(team)
 
     template = templates.get_template("invoices/invoice.html")
     html_content = template.render(
@@ -131,7 +131,7 @@ def invoices_list(
 
     query = db.query(Invoice)
     if(not user.admin):
-        query = db.query(Invoice).filter(Invoice.caller_id == user.caller_id)
+        query = db.query(Invoice).filter(Invoice.team_id == user.team_id)
     invoices = query.all()
 
 
@@ -154,7 +154,7 @@ def new_invoice(
 
     query = db.query(Company)
     if(not user.admin):
-        query = db.query(Company).filter(Company.caller_id == user.caller_id)
+        query = db.query(Company).filter(Company.team_id == user.team_id)
     companies = query.all()
 
 
@@ -178,16 +178,16 @@ def invoice_detail(
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
-    caller = db.get(Caller, user.caller_id)
-    if not caller:
-        raise HTTPException(status_code=404, detail="Caller not found for current user")
+    team = db.get(Team, user.team_id)
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found for current user")
 
     company_query = db.query(Company)
     if not user.admin:
-        company_query = company_query.filter(Company.caller_id == user.caller_id)
+        company_query = company_query.filter(Company.team_id == user.team_id)
     companies = company_query.all()
 
-    invoice_data = get_invoice_data(caller)
+    invoice_data = get_invoice_data(team)
     ctx = {"request": request, "invoice": invoice, "invoice_data": invoice_data, "companies": companies}
 
     if list == "short":
@@ -293,7 +293,7 @@ async def upsert_invoice(
             raise HTTPException(status_code=404, detail="invoice not found")
     else:
         invoice = Invoice()
-        invoice.caller_id = user.caller_id
+        invoice.team_id = user.team_id
 
 
     data_dict = update_data.model_dump(exclude_unset=True)
@@ -353,7 +353,7 @@ async def upsert_invoice(
     # Render updated list (HTMX swap)
     query = db.query(Invoice)
     if(not user.admin):
-        query = db.query(Invoice).filter(Invoice.caller_id == user.caller_id)
+        query = db.query(Invoice).filter(Invoice.team_id == user.team_id)
     invoices = query.all()
 
     response = templates.TemplateResponse(

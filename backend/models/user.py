@@ -20,8 +20,8 @@ class User(BaseMixin, Base):
     password_hash = Column(String, nullable=True)   # kept for migration; auth is in GlobalUser
     global_user_id = Column(Integer, nullable=True)  # references master.global_users.id (no FK across DBs)
     admin = Column(Integer, default=0)
-    caller_id = Column(Integer, ForeignKey("callers.id"), nullable=True)
-    caller = relationship("Team")
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
+    team = relationship("Team")
     extra = Column(MutableDict.as_mutable(JSON), default=dict)
 
     def verify_password(self, password: str) -> bool:
@@ -32,7 +32,7 @@ class User(BaseMixin, Base):
 
 
 class UserUpdate(BaseModel):
-    caller_id: Optional[int] = None
+    team_id: Optional[int] = None
     extra: Optional[Dict[str, Any]] = None
 
     class Config:

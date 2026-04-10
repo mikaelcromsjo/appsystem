@@ -18,7 +18,7 @@ core/database.py           # engines: engine (tenant default), master_engine
         │                  # sessions: SessionLocal, MasterSession
         │                  # deps: get_db(request) (tenant-aware), get_master_db()
         │                  # imports: core.models.base, core.config
-        │                  # lazy: core.models.models.User, models.master.*, models.caller
+        │                  # lazy: core.models.models.User, models.master.*, models.team
         │
 core/email.py              # send_login_link()  ← core.config (SMTP vars)
         │

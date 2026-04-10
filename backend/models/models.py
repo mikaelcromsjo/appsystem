@@ -4,7 +4,7 @@ __all__ = [
     "Account", "AccountUpdate",
     "Alarm",
     "Call", "CallUpdate",
-    "Caller", "Team",
+    "Team",
     "Company", "CompanyUpdate",
     "Customer", "CustomerUpdate",
     "Invoice", "InvoiceNumber", "InvoiceUpdate",
@@ -18,8 +18,7 @@ from models.base import Update
 from models.account import Account, AccountUpdate
 from models.alarm import Alarm
 from models.call import Call, CallUpdate
-from models.caller import Team
-Caller = Team  # backwards-compat alias
+from models.team import Team
 from models.company import Company, CompanyUpdate
 from models.customer import Customer, CustomerUpdate
 from models.invoice import Invoice, InvoiceNumber, InvoiceUpdate

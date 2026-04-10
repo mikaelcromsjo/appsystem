@@ -26,7 +26,7 @@
                     <td class="px-2 py-1 border">{{ company.extra.company_name }}</td>
                     <td class="px-2 py-1 border">{{ company.first_name }} {{ company.last_name }}</td>
                     <td class="px-2 py-1 border">{{ company.email }}</td>
-                    <td x-show="is_admin" class="px-2 py-1 border">{{ company.caller.name }}</td>
+                    <td x-show="is_admin" class="px-2 py-1 border">{{ company.team.name }}</td>
 
                     <td class="px-2 py-1 border text-center" 
                         @click.stop

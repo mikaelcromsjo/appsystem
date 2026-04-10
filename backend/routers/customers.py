@@ -28,7 +28,7 @@ from core.auth import get_current_user
 from core.models.models import BaseMixin, Update, User
 
 from functions.customers import get_user_customers
-from functions.customers import get_selected_ids, assign_customers_caller, SelectedIDs
+from functions.customers import get_selected_ids, assign_customers_team, SelectedIDs
 
 
 
@@ -65,14 +65,14 @@ def customers_list(
     user = Depends(get_current_user),
 ):
     customers = get_user_customers(db, request, user)
-    callers = db.query(Team).all()
+    teams = db.query(Team).all()
 
     return templates.TemplateResponse(
         "customers/list.html",
-        {"request": request, 
+        {"request": request,
          "customers": customers,
          "is_admin": user.admin,
-         "callers": callers,
+         "teams": teams,
 
         }
     )
@@ -103,22 +103,22 @@ def customers_data(
 
 
 class AssignRequest(BaseModel):
-    caller_id: int
+    team_id: int
     selected_ids: SelectedIDs
 
 @router.post("/assign", response_class=HTMLResponse)
-def assign_caller(
+def assign_team(
     request: Request,
     data: AssignRequest,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    caller_id = data.caller_id
+    team_id = data.team_id
     selected_ids = data.selected_ids
 
     # Extract list of IDs from form or session helper
     ids = get_selected_ids(request, selected_ids)
-    caller_id = int(caller_id)
+    team_id = int(team_id)
 
     if not ids:
         response = HTMLResponse("No customers selected", status_code=400)
@@ -126,7 +126,7 @@ def assign_caller(
         return response
 
     # Perform the safe DB update (validated in your CRUD helper)
-    updated_count = assign_customers_caller(db, ids, caller_id)
+    updated_count = assign_customers_team(db, ids, team_id)
 
     # Return an empty response with HTMX headers
     response = HTMLResponse("")  # empty body; HTMX will handle via headers
@@ -176,18 +176,18 @@ async def upsert_customer(
             del data_dict[key]  # optionally clean up the flat key
             
     # --- Temporarily remove relationships before populate ---
-    caller_id = (data_dict.pop("caller_id", None))  # remove 'caller' from dict
-    if caller_id:
-        caller_id = int(caller_id)
+    team_id = (data_dict.pop("team_id", None))  # remove 'team' from dict
+    if team_id:
+        team_id = int(team_id)
 
     # Populate DB model dynamically (everything except relationships)
     data_record = populate(data_dict, data_record, CustomerUpdate)
     # --- Handle relationships AFTER populate ---
-    if isinstance(caller_id, int):
-        caller_instance = db.get(Team, int(caller_id))
-        if not caller_instance:
+    if isinstance(team_id, int):
+        team_instance = db.get(Team, int(team_id))
+        if not team_instance:
             raise HTTPException(status_code=404, detail="Team not found")
-        data_record.caller = caller_instance  # assign the actual SQLAlchemy object
+        data_record.team = team_instance  # assign the actual SQLAlchemy object
 
 
     if data_record.location:
@@ -278,11 +278,11 @@ def customer_detail(
         )
     else:
         customer = Customer.empty()
-        customer.caller_id = user.caller_id
+        customer.team_id = user.team_id
 
-    callers = db.query(Team).all()
+    teams = db.query(Team).all()
 
-    customer.caller_id = int(customer.caller_id) if customer.caller_id is not None else None
+    customer.team_id = int(customer.team_id) if customer.team_id is not None else None
 
     if list == "short":
 
@@ -327,7 +327,7 @@ def customer_detail(
                 "organisations_map": cms.organisations_map,
                 "filters_map": cms.filters_map,
                 "personalities_map": cms.personalities_map,
-                "callers": callers,
+                "teams": teams,
                 "product_customers": product_customers,
                 "totals": totals,
                 "status_filter": status_filter
@@ -344,7 +344,7 @@ def customer_detail(
                 "organisations": cms.organisations,
                 "filters_json": cms.filters,
                 "personalities": cms.personalities,
-                "callers": callers,
+                "teams": teams,
             }
         )  
          
@@ -373,7 +373,7 @@ def customer_filter(
     cms: CmsConfig = Depends(get_cms_config),
 ):
         
-    callers = (
+    teams = (
         db.query(Team)
         .all()
     )

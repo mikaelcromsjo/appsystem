@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -89,7 +90,7 @@ async def tenant_create(
     if global_user_id:
         master_db.add(UserTenant(global_user_id=global_user_id, tenant_id=tenant.id))
 
-        from models.caller import Team
+        from models.team import Team
         from core.models.models import User
         tenant_db = sessionmaker(bind=tenant_engine)()
         try:
@@ -102,7 +103,7 @@ async def tenant_create(
                 password_hash="",
                 admin=1,
                 global_user_id=global_user_id,
-                caller_id=team.id,
+                team_id=team.id,
             )
             tenant_db.add(local_user)
             tenant_db.commit()
@@ -253,3 +254,107 @@ async def globaluser_remove_tenant(
         master_db.delete(link)
         master_db.commit()
     return await globalusers_list(request, master_db)
+
+
+# --- Scripts ---
+
+ALLOWED_SCRIPTS = {
+    "migrate_all_tenants": "/app/backend/scripts/migrate_all_tenants.py",
+}
+
+SCRIPT_EXAMPLES = {
+    "migrate_all_tenants": [
+        "Migrera alla active tenants till senaste databasschema<br>(no arguments needed)"
+    ],
+}
+
+
+def clean_output(raw_output: str) -> str:
+    """Remove noisy output for nicer display."""
+    lines = raw_output.splitlines()
+    cleaned = []
+    for line in lines:
+        if any(keyword in line for keyword in [
+            "PYTHONPATH",
+            "/usr/local/lib/python",
+            "site-packages",
+            "UserWarning",
+        ]):
+            continue
+        cleaned.append(line)
+    return "\n".join(cleaned).strip()
+
+
+@router.get("/scripts", response_class=HTMLResponse, name="global_admin_scripts")
+async def global_admin_scripts(request: Request):
+    return templates.TemplateResponse(
+        "global_admin/scripts.html",
+        {"request": request, "output": None, "html_output": None, "scripts": ALLOWED_SCRIPTS, "script_examples": SCRIPT_EXAMPLES},
+    )
+
+
+@router.post("/scripts", response_class=HTMLResponse)
+async def run_global_admin_script(
+    request: Request,
+    script_name: str = Form(...),
+    args: str = Form(""),
+):
+    if script_name not in ALLOWED_SCRIPTS:
+        return templates.TemplateResponse(
+            "global_admin/scripts.html",
+            {
+                "request": request,
+                "output": f"❌ Script '{script_name}' not found",
+                "html_output": None,
+                "scripts": ALLOWED_SCRIPTS,
+                "script_examples": SCRIPT_EXAMPLES,
+            },
+        )
+
+    script_path = ALLOWED_SCRIPTS[script_name]
+    cmd = ["python", script_path] + args.split()
+
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=300,  # 5 minute timeout
+        )
+        output = result.stdout + result.stderr
+        output = clean_output(output)
+
+        return templates.TemplateResponse(
+            "global_admin/scripts.html",
+            {
+                "request": request,
+                "output": output,
+                "html_output": None,
+                "scripts": ALLOWED_SCRIPTS,
+                "script_examples": SCRIPT_EXAMPLES,
+            },
+        )
+    except subprocess.TimeoutExpired:
+        output = "❌ Script timed out (5 minute limit)"
+        return templates.TemplateResponse(
+            "global_admin/scripts.html",
+            {
+                "request": request,
+                "output": output,
+                "html_output": None,
+                "scripts": ALLOWED_SCRIPTS,
+                "script_examples": SCRIPT_EXAMPLES,
+            },
+        )
+    except Exception as e:
+        output = f"❌ Error: {str(e)}"
+        return templates.TemplateResponse(
+            "global_admin/scripts.html",
+            {
+                "request": request,
+                "output": output,
+                "html_output": None,
+                "scripts": ALLOWED_SCRIPTS,
+                "script_examples": SCRIPT_EXAMPLES,
+            },
+        )

@@ -25,8 +25,8 @@ class Customer(BaseMixin, Base):
     description_phone = Column(String, nullable=True)
     location = Column(String, nullable=True)
     contributes = Column(Integer, nullable=True)
-    caller_id = Column(Integer, ForeignKey("callers.id"), nullable=True)
-    caller = relationship("Team", back_populates="customers")
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
+    team = relationship("Team", back_populates="customers")
     comment = Column(String, nullable=True)
     sub_caller = Column(String, nullable=True)
     organisations = Column(JSON, default=[])
@@ -57,7 +57,7 @@ class CustomerUpdate(BaseModel):
     organisations: Optional[List[str]] = []
     personality_type: Optional[int] = None
     contributes: Optional[int] = None
-    caller: Optional[int] = None
+    team: Optional[int] = None
     controlled: Optional[bool] = False
     filter_a: Optional[bool] = False
     filter_b: Optional[bool] = False

@@ -112,7 +112,7 @@ def create_tenant(slug: str, name: str, db_dir: str = "/dbdata"):
         master_db.commit()
 
         # Create local User in tenant DB
-        from models.caller import Team
+        from models.team import Team
         tenant_db = sessionmaker(bind=tenant_engine)()
         default_team = tenant_db.query(Team).filter_by(name="Admin").first()
         if not default_team:
@@ -122,10 +122,10 @@ def create_tenant(slug: str, name: str, db_dir: str = "/dbdata"):
         local = tenant_db.query(User).filter_by(global_user_id=global_user.id).first()
         if not local:
             tenant_db.add(User(username=email, admin=1, global_user_id=global_user.id,
-                               caller_id=default_team.id))
+                               team_id=default_team.id))
             tenant_db.commit()
-        elif local.caller_id is None:
-            local.caller_id = default_team.id
+        elif local.team_id is None:
+            local.team_id = default_team.id
             tenant_db.commit()
         tenant_db.close()
         print(f"  Local admin user created in {slug}.db")

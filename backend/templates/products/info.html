@@ -145,7 +145,7 @@
     <tbody>
         {% for ec in product_customers %}
 
-{% set enableRow = user.admin > 0 or user.caller_id == ec.customer.caller_id %}
+{% set enableRow = user.admin > 0 or user.team_id == ec.customer.team_id %}
 <tr class="hover:bg-gray-100 {% if enableRow %} {% endif %} {% if not enableRow %} bg-gray-50 {% endif %}">
     
     <!-- Customer name -->

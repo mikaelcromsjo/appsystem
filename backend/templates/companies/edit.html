@@ -115,10 +115,10 @@
     <!-- Caller 
     <div class="mb-2">
         <label class="block font-semibold">{{ "Caller" | t }}</label>
-        <select name="caller_id" class="border p-1 w-full">
-            <option value="" {% if company.caller is none %}selected{% endif %}>{{ "Select..." | t }}</option>
-            {% for caller in callers %}
-              <option value="{{ caller.id }}" {% if company.caller_id == caller.id %}selected{% endif %}>{{ caller.name }}</option>
+        <select name="team_id" class="border p-1 w-full">
+            <option value="" {% if company.team is none %}selected{% endif %}>{{ "Select..." | t }}</option>
+            {% for team in callers %}
+              <option value="{{ team.id }}" {% if company.team_id == team.id %}selected{% endif %}>{{ team.name }}</option>
             {% endfor %}
         </select>
     </div>

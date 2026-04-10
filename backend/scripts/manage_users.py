@@ -5,8 +5,8 @@ Usage:
     python scripts/manage_users.py --tenant <slug> --email <email> [options]
 
 Examples:
-    python scripts/manage_users.py --tenant acme --email john@acme.com --password Secret123 --admin 1 --caller "Main Office"
-    python scripts/manage_users.py --tenant acme --email john@acme.com --caller "Sales"
+    python scripts/manage_users.py --tenant acme --email john@acme.com --password Secret123 --admin 1 --team "Main Office"
+    python scripts/manage_users.py --tenant acme --email john@acme.com --team "Sales"
 
 Writes to both:
   - master.db: GlobalUser (auth identity, email + password)
@@ -39,7 +39,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from models.master import GlobalUser, MasterBase, Tenant, UserTenant
 from models.user import User
-from models.caller import Team
+from models.team import Team
 from core.database import MASTER_DATABASE_URL
 
 
@@ -56,7 +56,7 @@ def get_tenant_db(tenant: Tenant) -> Session:
     return sessionmaker(bind=engine)()
 
 
-def manage_user(tenant_slug: str, email: str, password: str | None, admin: int, caller_name: str | None):
+def manage_user(tenant_slug: str, email: str, password: str | None, admin: int, team_name: str | None):
     master_db = get_master_db()
 
     tenant = master_db.query(Tenant).filter_by(slug=tenant_slug, active=True).first()
@@ -95,26 +95,26 @@ def manage_user(tenant_slug: str, email: str, password: str | None, admin: int, 
 
         # --- Local User (tenant DB) ---
         caller = None
-        if caller_name:
-            caller = tenant_db.query(Team).filter_by(name=caller_name).first()
+        if team_name:
+            caller = tenant_db.query(Team).filter_by(name=team_name).first()
             if not caller:
-                caller = Team(name=caller_name)
+                caller = Team(name=team_name)
                 tenant_db.add(caller)
                 tenant_db.flush()
-                print(f"  Created team '{caller_name}'")
+                print(f"  Created team '{team_name}'")
 
         local_user = tenant_db.query(User).filter_by(global_user_id=global_user.id).first()
         if local_user:
             local_user.admin = admin
             if caller is not None:
-                local_user.caller = caller
+                local_user.team = caller
             print(f"  Updated local user in '{tenant_slug}' (admin={admin})")
         else:
             local_user = User(
                 username=email,
                 admin=admin,
                 global_user_id=global_user.id,
-                caller=caller,
+                team=caller,
             )
             tenant_db.add(local_user)
             print(f"  Created local user in '{tenant_slug}' (admin={admin})")
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     parser.add_argument("--email", required=True, help="Email address (globally unique login identity)")
     parser.add_argument("--password", default=None, help="Password (prompted if omitted for new users)")
     parser.add_argument("--admin", type=int, default=0, help="Admin flag: 0=normal, 1=admin")
-    parser.add_argument("--caller", default=None, help="Team/caller name (optional)")
+    parser.add_argument("--team", default=None, help="Team/caller name (optional)")
 
     args = parser.parse_args()
     manage_user(args.tenant, args.email, args.password, args.admin, args.caller)

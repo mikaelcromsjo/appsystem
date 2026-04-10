@@ -21,7 +21,16 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade():
     print("[upgrade] Starting migration: adding last_call_date column")
-    op.add_column("customers", sa.Column("last_call_date", sa.DateTime(timezone=True), nullable=True))
+
+    # Check if column already exists
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    existing_columns = [c["name"] for c in inspector.get_columns("customers")]
+
+    if "last_call_date" not in existing_columns:
+        op.add_column("customers", sa.Column("last_call_date", sa.DateTime(timezone=True), nullable=True))
+    else:
+        print("[upgrade] last_call_date column already exists, skipping add_column")
 
     connection = op.get_bind()
     customers = connection.execute(sa.text("SELECT id, extra FROM customers")).fetchall()

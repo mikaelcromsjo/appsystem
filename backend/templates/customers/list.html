@@ -84,7 +84,7 @@
                                 <td class="px-2 py-1 border">{{ customer.email or ''}}</td>
                                 <td class="px-2 py-1 border">{{ customer.phone or ''}}</td>
                                 <td class="px-2 py-1 border">{{ customer.location or '' }}</td>
-                                <td x-show="is_admin" class="px-2 py-1 border">{{ customer.caller.name }}</td>
+                                <td x-show="is_admin" class="px-2 py-1 border">{{ customer.team.name }}</td>
 
                                 <td class="px-2 py-1 border text-center" @click.stop>
 
@@ -181,22 +181,22 @@
             </button>
 
 
-            <div x-data="{ caller_id: ''}">
+            <div x-data="{ team_id: ''}">
 
                 <!-- Assign button -->
                 <button
-                    :hx-vals="JSON.stringify({ caller_id: caller_id, selected_ids: { selected_ids: $store.customers.getSelectedIds() } })"
+                    :hx-vals="JSON.stringify({ team_id: team_id, selected_ids: { selected_ids: $store.customers.getSelectedIds() } })"
                     hx-post="/customers/assign" hx-ext="json-enc" hx-swap="none"
                     class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200">
                     {{ 'Assign' | t }}
                 </button>
 
                 <!-- Caller selection -->
-                <select id="caller-select" name="caller_id" x-model="caller_id" class="border p-1">
+                <select id="team-select" name="team_id" x-model="team_id" class="border p-1">
 
                     <option value="">{{ 'Select Caller...' | t }}</option>
-                    {% for caller in callers %}
-                    <option value="{{ caller.id }}">{{ caller.name }}</option>
+                    {% for team in callers %}
+                    <option value="{{ team.id }}">{{ team.name }}</option>
                     {% endfor %}
                 </select>
 

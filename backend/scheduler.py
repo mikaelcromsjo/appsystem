@@ -41,7 +41,7 @@ async def alarm_scheduler():
             )
 
             for alarm in due_alarms:
-                users = db.query(User).filter(User.caller_id == alarm.caller_id).all()
+                users = db.query(User).filter(User.team_id == alarm.team_id).all()
                 for user in users:
                     if not user:
                         continue
