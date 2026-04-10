@@ -356,74 +356,62 @@ async def import_customers(
 
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse
-from pathlib import Path
 import json
-import importlib
-import data.constants as constants 
+from data.constants import CMS_CONFIG_KEY, load_cms_config
+from models.config import TenantConfig
 
-DATA_DIR = Path("./data")
 
-def save_json(filename, data):
-    path = DATA_DIR / filename
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+def _cms_context(cfg: dict) -> dict:
+    return {
+        "categories_json":    json.dumps(cfg["categories"],    indent=2, ensure_ascii=False),
+        "products_json":      json.dumps(cfg["products"],      indent=2, ensure_ascii=False),
+        "organisations_json": json.dumps(cfg["organisations"], indent=2, ensure_ascii=False),
+        "filters_json":       json.dumps(cfg["filters"],       indent=2, ensure_ascii=False),
+        "personalities_json": json.dumps(cfg["personalities"], indent=2, ensure_ascii=False),
+    }
+
 
 @router.get("/data", response_class=HTMLResponse, name="admin_data")
-def admin_data(request: Request):
-    """Display current JSON data in editable textareas."""
+def admin_data(request: Request, db: Session = Depends(get_db)):
+    cfg = load_cms_config(db)
     return templates.TemplateResponse(
         "admin/data.html",
-        {
-            "request": request,
-            "categories_json": json.dumps(constants.categories, indent=2, ensure_ascii=False),
-            "products_json": json.dumps(constants.products, indent=2, ensure_ascii=False),
-            "organisations_json": json.dumps(constants.organisations, indent=2, ensure_ascii=False),
-            "filters_json": json.dumps(constants.filters, indent=2, ensure_ascii=False),
-            "personalities_json": json.dumps(constants.personalities, indent=2, ensure_ascii=False),
-        },
+        {"request": request, **_cms_context(cfg)},
     )
 
 
 @router.post("/data", response_class=HTMLResponse)
 def save_data(
     request: Request,
+    db: Session = Depends(get_db),
     categories_text: str = Form(...),
     products_text: str = Form(...),
     organisations_text: str = Form(...),
     filters_text: str = Form(...),
     personalities_text: str = Form(...),
 ):
-    """Save edited JSON, then reload data.constants."""
     try:
-        new_categories = json.loads(categories_text)
-        new_products = json.loads(products_text)
-        new_organisations = json.loads(organisations_text)
-        new_filters = json.loads(filters_text)
-        new_personalities = json.loads(personalities_text)
+        cfg = {
+            "categories":    json.loads(categories_text),
+            "products":      json.loads(products_text),
+            "organisations": json.loads(organisations_text),
+            "filters":       json.loads(filters_text),
+            "personalities": json.loads(personalities_text),
+        }
     except json.JSONDecodeError as e:
         return HTMLResponse(
-            f"<div class='alert alert-danger'>Invalid JSON: {e}</div>", status_code=400
+            f"<div class='text-red-700 bg-red-100 border border-red-400 px-4 py-3 rounded-md'>Invalid JSON: {e}</div>",
+            status_code=400,
         )
 
-    # Save to disk
-    save_json("categories.json", new_categories)
-    save_json("products.json", new_products)
-    save_json("organisations.json", new_organisations)
-    save_json("filters.json", new_filters)
-    save_json("personalities.json", new_personalities)
-
-    # Reload constants (this will rebuild the *_map variables)
-    importlib.reload(constants)
+    row = db.query(TenantConfig).filter_by(key=CMS_CONFIG_KEY).first()
+    if row:
+        row.value = json.dumps(cfg, ensure_ascii=False)
+    else:
+        db.add(TenantConfig(key=CMS_CONFIG_KEY, value=json.dumps(cfg, ensure_ascii=False)))
+    db.commit()
 
     return templates.TemplateResponse(
         "admin/data.html",
-        {
-            "request": request,
-            "categories_json": json.dumps(constants.categories, indent=2, ensure_ascii=False),
-            "products_json": json.dumps(constants.products, indent=2, ensure_ascii=False),
-            "organisations_json": json.dumps(constants.organisations, indent=2, ensure_ascii=False),
-            "filters_json": json.dumps(constants.filters, indent=2, ensure_ascii=False),
-            "personalities_json": json.dumps(constants.personalities, indent=2, ensure_ascii=False),
-            "message": "✅ Data saved and reloaded successfully!",
-        },
+        {"request": request, **_cms_context(cfg), "message": "Saved."},
     )

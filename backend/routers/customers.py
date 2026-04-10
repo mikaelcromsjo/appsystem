@@ -18,7 +18,7 @@ from core.database import get_db
 from core.functions.helpers import render
 from templates import templates
 
-import data.constants as constants
+from data.constants import CmsConfig, get_cms_config
 
 from models.models import Customer, CustomerUpdate, Team, ProductCustomer
 from core.functions.helpers import populate, build_filters
@@ -261,7 +261,8 @@ def customer_detail(
     user = Depends(get_current_user),
     list: str | None = Query(default=None),
     status_filter: int | None = Query(default=None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
     
 
@@ -322,10 +323,10 @@ def customer_detail(
                 "request": request, 
                 "customer": customer, 
                 "customer_id": customer_id, 
-                "categories_map": constants.categories_map,
-                "organisations_map": constants.organisations_map, 
-                "filters_map": constants.filters_map, 
-                "personalities_map": constants.personalities_map, 
+                "categories_map": cms.categories_map,
+                "organisations_map": cms.organisations_map,
+                "filters_map": cms.filters_map,
+                "personalities_map": cms.personalities_map,
                 "callers": callers,
                 "product_customers": product_customers,
                 "totals": totals,
@@ -339,10 +340,10 @@ def customer_detail(
             {
                 "request": request, 
                 "customer": customer, 
-                "categories": constants.categories, 
-                "organisations": constants.organisations, 
-                "filters_json": constants.filters, 
-                "personalities": constants.personalities, 
+                "categories": cms.categories,
+                "organisations": cms.organisations,
+                "filters_json": cms.filters,
+                "personalities": cms.personalities,
                 "callers": callers,
             }
         )  
@@ -368,7 +369,8 @@ def delete_customer(customer_id: str, db: Session = Depends(get_db), user = Depe
 @router.get("/filter", response_class=HTMLResponse)
 def customer_filter(
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
         
     callers = (
@@ -383,10 +385,10 @@ def customer_filter(
         {
             "request": request, 
             "filter_dict": filter_dict, 
-            "categories": constants.categories, 
-            "organisations": constants.organisations, 
-            "c_filters": constants.filters, 
-            "personalities": constants.personalities, 
+            "categories": cms.categories,
+            "organisations": cms.organisations,
+            "c_filters": cms.filters,
+            "personalities": cms.personalities,
             "callers": callers,
         }
     )

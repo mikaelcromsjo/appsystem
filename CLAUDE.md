@@ -26,6 +26,10 @@ Per-file docs (`<file>.py.md`) only for non-obvious files:
 
 Update the relevant `.py.md` and directory doc after any larger edit.
 
+# Translation
+
+Use filer { "English string" | t } in jinja - t = translation
+
 # Claude Code
 
 ## Edit files

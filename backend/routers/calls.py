@@ -9,18 +9,16 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 import zoneinfo
-import data.constants as constants
-
 from core.database import get_db
 from templates import templates
 from core.functions.helpers import local_to_utc, utc_to_local
 
+from data.constants import CmsConfig, get_cms_config, SHOW_PRODUCTS_X_DAYS
 
 from models.models import Customer, Call, Product, ProductCustomer, Team, Alarm
 from core.functions.helpers import render
 from functions.customers import get_selected_ids, get_customers, SelectedIDs
 
-import data.constants as constants
 from core.auth import get_current_user
 
 
@@ -38,7 +36,8 @@ def call_center_dashboard(
     request: Request,
     selected_ids: Optional[SelectedIDs] = None,
     db: Session = Depends(get_db),
-    user = Depends(get_current_user)
+    user = Depends(get_current_user),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
     """
     Single route to render the call center dashboard for both GET and POST.
@@ -51,7 +50,7 @@ def call_center_dashboard(
 
     # list all that has not ended now() - 30 days
 
-    product_date_filter_start = datetime.now(timezone.utc) - timedelta(days=constants.SHOW_PRODUCTS_X_DAYS)
+    product_date_filter_start = datetime.now(timezone.utc) - timedelta(days=SHOW_PRODUCTS_X_DAYS)
 
     query = db.query(Product)
     if product_date_filter_start:
@@ -62,7 +61,7 @@ def call_center_dashboard(
 
     return render(
         "calls/dashboard.html",
-        {"request": request, "customers": customers, "products": products, "products_json": constants.products, "filters_map": constants.filters_map },
+        {"request": request, "customers": customers, "products": products, "products_json": cms.products, "filters_map": cms.filters_map },
     )
 
 
@@ -91,7 +90,8 @@ def call_poducts_list(
     request: Request,
     selected_ids: Optional[SelectedIDs] = None,
     db: Session = Depends(get_db),
-    user = Depends(get_current_user)
+    user = Depends(get_current_user),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
     
     query = db.query(Product)
@@ -99,7 +99,7 @@ def call_poducts_list(
 
     return render(
         "calls/products_list.html",
-        {"request": request, "products": products, "filters_map": constants.filters_map}, 
+        {"request": request, "products": products, "filters_map": cms.filters_map},
     )
 
 
@@ -116,7 +116,8 @@ async def customer_data(
     request: Request,
     customer_id: int = Query(default=0),
     db = Depends(get_db),
-    user = Depends(get_current_user)
+    user = Depends(get_current_user),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
     
     user_id = user.id
@@ -158,10 +159,10 @@ async def customer_data(
         {
             "request": request, 
             "customer": customer,
-            "categories_map": constants.categories_map,
-            "organisations_map": constants.organisations_map, 
-            "filters_map": constants.filters_map, 
-            "personalities_map": constants.personalities_map, 
+            "categories_map": cms.categories_map,
+            "organisations_map": cms.organisations_map,
+            "filters_map": cms.filters_map,
+            "personalities_map": cms.personalities_map,
             "callers": callers,
             "customer": customer,
             "calls": calls
@@ -532,6 +533,7 @@ def calls_product_detail(
     product_id: int,
     customer_id: str | None = Query(default=None),
     db: Session = Depends(get_db),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
     
     product = db.get(Product, product_id)
@@ -558,8 +560,8 @@ def calls_product_detail(
             "product": product, 
             "product_status": product_status,
             "product_type_status": product_type_status,
-            "products_map": constants.products_map,
-            "filters_map": constants.filters_map
+            "products_map": cms.products_map,
+            "filters_map": cms.filters_map
         }
     )
 

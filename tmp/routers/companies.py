@@ -1,14 +1,24 @@
-from fastapi import APIRouter, Depends, Request, HTTPException, Query
-from fastapi.responses import HTMLResponse
-from sqlalchemy.orm import Session
-from typing import Optional
+from fastapi import APIRouter, Depends, Form, Request, HTTPException, Query
+from fastapi.responses import HTMLResponse, RedirectResponse
 
+from sqlalchemy import Column, Integer, String, JSON
+from sqlalchemy.orm import Session
+
+from pydantic import BaseModel, Field
+
+from typing import List, Optional, Dict, Any
+from typing import Any, Union, Optional, get_origin, get_args
+
+from core.models.base import Base
 from core.database import get_db
-from core.functions.helpers import render, populate
+from core.functions.helpers import render
 from templates import templates
-from models.models import Company, CompanyUpdate, Caller, Update
+import data.constants as constants
+from models.models import Company, CompanyUpdate, Caller
+from core.functions.helpers import populate, build_filters
+
+from models.models import Update
 from core.auth import get_current_user
-from data.constants import CmsConfig, get_cms_config
 
 
 # -------------------------------------------------
@@ -49,8 +59,7 @@ def companies_list(
 @router.get("/new", response_class=HTMLResponse) 
 def company_new(
     request: Request,
-    db: Session = Depends(get_db),
-    cms: CmsConfig = Depends(get_cms_config),
+    db: Session = Depends(get_db)
 ):
 
     company = Company.empty()
@@ -64,7 +73,7 @@ def company_new(
             "request": request, 
             "company": company, 
             "mode": "edit",
-            "categories": cms.categories,
+            "categories": constants.categories,
             "callers": callers, 
         }
     )
@@ -220,3 +229,58 @@ def delete_company(company_id: str, db: Session = Depends(get_db)):
 
 
 
+@router.get("/filter", response_class=HTMLResponse)
+def company_filter(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+        
+    callers = (
+        db.query(Caller)
+        .all()
+    )
+
+    filter_dict = {}
+#    filters = build_filters(data_dict, Company)
+
+    return templates.TemplateResponse(
+        "companies/filter.html",
+        {
+            "request": request, 
+            "filters": filter_dict, 
+            "categories": constants.categories, 
+            "organisations": organisations, 
+            "personalities": personalities, 
+            "callers": callers,
+        }
+    )
+
+from sqlalchemy import or_, and_
+
+@router.post("/set_filter", name="set_filter", response_class=HTMLResponse)
+async def set_filter(
+    request: Request,
+    update_data: Update,
+    db: Session = Depends(get_db),
+):
+    data_dict = update_data.model_dump()
+    print (data_dict)
+
+    # build SQLAlchemy filters
+    filters = build_filters(data_dict, Company)
+
+    # save filters definition (not SQLAlchemy objects) in session
+    request.session["company_filters"] = data_dict  
+
+    # later you can re-run build_filters(request.session["company_filters"], Company)
+
+    query = db.query(Company)
+    filters = build_filters(data_dict, Company)
+    if filters:
+        query = query.filter(*filters)
+    companies = query.all()
+
+    return templates.TemplateResponse(
+        "companies/list.html",
+        {"request": request, "companies": companies}
+    )

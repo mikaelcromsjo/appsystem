@@ -76,6 +76,14 @@ async def tenant_create(
     tenant_engine = _get_tenant_engine(db_url)
     Base.metadata.create_all(bind=tenant_engine)
 
+    # Seed default CMS config
+    from data.constants import seed_cms_config
+    tenant_db_seed = sessionmaker(bind=tenant_engine)()
+    try:
+        seed_cms_config(tenant_db_seed)
+    finally:
+        tenant_db_seed.close()
+
     # Seed the requesting superadmin as a local user in the new tenant
     global_user_id = request.session.get("global_user_id")
     if global_user_id:

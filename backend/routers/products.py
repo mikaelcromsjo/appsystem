@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi import APIRouter, Depends, Form, Request, HTTPException, Query
 
-import data.constants as constants
+from data.constants import CmsConfig, get_cms_config, SHOW_PRODUCTS_X_DAYS
 from datetime import datetime, timezone
 
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -39,11 +39,12 @@ router = APIRouter(prefix="/products", tags=["products"])
 def products_list(
     request: Request,
     db: Session = Depends(get_db),
-    user = Depends(get_current_user)
+    user = Depends(get_current_user),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
 
     # list all that has not ended now() - 30 days
-    product_date_filter_start = datetime.now(timezone.utc) - timedelta(days=constants.SHOW_PRODUCTS_X_DAYS)
+    product_date_filter_start = datetime.now(timezone.utc) - timedelta(days=SHOW_PRODUCTS_X_DAYS)
     query = select(Product)
 
     if product_date_filter_start:
@@ -53,7 +54,7 @@ def products_list(
 
     return templates.TemplateResponse(
         "products/list.html", {
-            "request": request, "products": products, "is_admin": user.admin, "products_map": constants.products_map
+            "request": request, "products": products, "is_admin": user.admin, "products_map": cms.products_map
 }
     )
 
@@ -85,6 +86,7 @@ def product_detail(
     list: str | None = Query(default=None),
     status_filter: int | None = Query(default=None),
     db: Session = Depends(get_db),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
     
     product = db.get(Product, product_id)
@@ -131,9 +133,9 @@ def product_detail(
                 "totals": totals,
                 "status_filter": status_filter,
                 "user": user,
-                "products_map": constants.products_map,
-                "products_json": constants.products,
-                "filters_map": constants.filters_map
+                "products_map": cms.products_map,
+                "products_json": cms.products,
+                "filters_map": cms.filters_map
             }
         )
     else:
@@ -142,7 +144,7 @@ def product_detail(
             "products/edit.html", {"request": request, 
                                    "product": product, 
                                    "editable": True,
-                                    "products": constants.products,
+                                    "products": cms.products,
                                     }
         )
      
@@ -162,7 +164,8 @@ async def upsert_product(
     request: Request,
     update_data: Update,
     db: Session = Depends(get_db),
-    user = Depends(get_current_user)
+    user = Depends(get_current_user),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
     
     if not user.admin:
@@ -214,7 +217,7 @@ async def upsert_product(
         {
             "request": request, 
             "products": products,
-            "products_map": constants.products_map,
+            "products_map": cms.products_map,
          },
     )
     # Set the popup message in a custom header
@@ -242,6 +245,7 @@ def delete_product(product_id: str, db: Session = Depends(get_db), user = Depend
 async def set_filter(
     request: Request,
     db: Session = Depends(get_db),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
     data = await request.json()
 
@@ -268,7 +272,7 @@ async def set_filter(
 
     response = templates.TemplateResponse(
         "products/list.html",
-        {"request": request, "products": products, "products_map": constants.products_map}
+        {"request": request, "products": products, "products_map": cms.products_map}
     )
     response.headers["HX-Popup-Message"] = "Updated"
     return response

@@ -18,7 +18,7 @@ from core.database import engine, master_engine, init_admin_user
 from core.models.base import Base
 from models.master import MasterBase
 import models.account, models.alarm, models.call, models.caller, models.company  # noqa: F401
-import models.customer, models.invoice, models.product, models.product_customer  # noqa: F401
+import models.config, models.customer, models.invoice, models.product, models.product_customer  # noqa: F401
 import models.tag, models.user  # noqa: F401
 from middleware import LanguageMiddleware
 from scheduler import alarm_scheduler
@@ -62,6 +62,13 @@ async def on_startup():
     MasterBase.metadata.create_all(bind=master_engine)
     Base.metadata.create_all(bind=engine)
     init_admin_user()
+    from sqlalchemy.orm import sessionmaker
+    from data.constants import seed_cms_config
+    _db = sessionmaker(bind=engine)()
+    try:
+        seed_cms_config(_db)
+    finally:
+        _db.close()
     asyncio.create_task(alarm_scheduler())
 
 

@@ -1,81 +1,69 @@
     <div id="admin_data-container">
 
-<h2>🗂 Data Administration</h2>
-<br>
-<br>
-
-  <form
-    hx-post="{{ url_for('admin_data') }}"
-    hx-target="#admin_data-container"
-    hx-swap="outerHTML"
+<div class="flex items-center gap-4 mb-6">
+  <button
+    hx-get="{{ url_for('admin_dashboard') }}"
+    hx-target="#admin_content"
+    hx-swap="innerHTML"
+    class="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md px-3 py-1.5 bg-white hover:bg-gray-50"
   >
-    <div id="data-container" class="space-y-4">
-      <div class="mb-3">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Categories JSON</label>
-        <textarea
-          
-          name="categories_text"
-          rows="10"
-          class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-        >{{ categories_json }}</textarea>
-      </div>
+    ← Back
+  </button>
+  <h2 class="text-lg font-semibold">Data Administration</h2>
+</div>
 
-    <div id="data-container" class="space-y-4">
-      <div class="mb-3">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Products JSON</label>
-        <textarea
-          
-          name="products_text"
-          rows="10"
-          class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-        >{{ products_json }}</textarea>
-      </div>
-
-
-      <div class="mb-3">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Organisations JSON</label>
-        <textarea
-          
-          name="organisations_text"
-          rows="10"
-          class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-        >{{ organisations_json }}</textarea>
-      </div>
-
-      
-            <div class="mb-3">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Filters JSON</label>
-        <textarea
-          
-          name="filters_text"
-          rows="10"
-          class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-        >{{ filters_json }}</textarea>
-      </div>
-
-      <div class="mb-3">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Personalities JSON</label>
-        <textarea
-          
-          name="personalities_text"
-          rows="10"
-          class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-        >{{ personalities_json }}</textarea>
-      </div>
-
-<button
-  type="submit"
-  class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"
+<form
+  hx-post="{{ url_for('admin_data') }}"
+  hx-target="#admin_data-container"
+  hx-swap="outerHTML"
 >
- {{ "Save" | t }}
-</button>    </div>
-  </form>
-<br>
+  <div class="space-y-3">
+
+    {% set fields = [
+      ("categories_text",    "Categories",    categories_json),
+      ("products_text",      "Products",      products_json),
+      ("organisations_text", "Organisations", organisations_json),
+      ("filters_text",       "Filters",       filters_json),
+      ("personalities_text", "Personalities", personalities_json),
+    ] %}
+
+    {% for name, label, value in fields %}
+    <details class="border border-gray-200 rounded-lg bg-white shadow-sm">
+      <summary class="cursor-pointer select-none px-4 py-2.5 font-medium text-gray-700 hover:bg-gray-50 rounded-lg list-none flex items-center justify-between">
+        <span>{{ label }}</span>
+        <span class="text-gray-400 text-xs">▼</span>
+      </summary>
+      <div class="px-3 pb-3 pt-2">
+        <textarea
+          name="{{ name }}"
+          rows="18"
+          spellcheck="false"
+          class="w-full font-mono text-sm rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-gray-800 shadow-inner focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 resize-y"
+          style="min-height: 12rem;"
+          x-data
+          x-init="$el.style.height = $el.scrollHeight + 'px'"
+          @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"
+        >{{ value }}</textarea>
+      </div>
+    </details>
+    {% endfor %}
+
+    <div class="pt-2">
+      <button
+        type="submit"
+        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-5 rounded-md shadow focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"
+      >
+        {{ "Save" | t }}
+      </button>
+    </div>
+
+  </div>
+</form>
 
 {% if message %}
-<div class="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded-md" role="alert">
+<div class="mt-4 bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded-md" role="alert">
   {{ message }}
-</div>  
+</div>
 {% endif %}
 
     </div>

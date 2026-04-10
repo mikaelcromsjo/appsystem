@@ -27,7 +27,7 @@ from core.models.base import Base
 from models.models import Alarm
 from models.models import Update
 from core.functions.helpers import populate
-import data.constants as constants
+from data.constants import CmsConfig, get_cms_config
 
 
 router = APIRouter(prefix="/alarms", tags=["alarms"])
@@ -62,11 +62,12 @@ def alarms_list(
 def new_alarm(
     request: Request,
     db: Session = Depends(get_db),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
     alarm = Alarm.empty()
 
     return templates.TemplateResponse(
-        "alarms/edit.html", {"request": request, "alarm": alarm, "editable": True, "filters_json": constants.filters }
+        "alarms/edit.html", {"request": request, "alarm": alarm, "editable": True, "filters_json": cms.filters}
     )               
 
 from urllib.parse import urlencode

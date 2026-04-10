@@ -14,7 +14,6 @@ from core.models.base import Base
 from core.database import get_db
 from core.functions.helpers import render
 from templates import templates
-import data.constants as constants
 from core.models.models import User, UserUpdate
 from core.functions.helpers import populate, build_filters
 
