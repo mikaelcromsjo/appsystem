@@ -1,0 +1,31 @@
+<div x-init="$store.modal_alarms.title = '{{ "Alarm" | t }}: {{ alarm.customer.first_name }} {{ alarm.customer.last_name }} '"></div> 
+<div x-init="$store.modal_alarms.submit = ''"></div> 
+
+
+{% if alarm.note %}
+<div class="mb-1"><strong>{{ "Note" | t }}:</strong> {{ alarm.note }}</div>
+{% endif %}
+
+{% if alarm.date %}
+<div class="mb-1"><strong>{{ "Date" | t }}:</strong> {{ alarm.date | date }}</div>
+{% endif %}
+
+{% if alarm.deminder %}
+<div class="mb-1"><strong>{{ "Reminder" | t }}:</strong> {{ alarm.reminder | date }}</div>
+{% endif %}
+
+{% if alarm.customer %}
+<div class="mb-1"><strong>{{ "Customer" | t }}:</strong> {{ alarm.customer.first_name }} {{ alarm.customer.last_name }}</div>
+{% endif %}
+
+{% if alarm.date %}
+<br/>
+<a href="{{ google_calendar_link }}" target="_blank" class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200">
+    Lägg till i Google Calendar
+</a>
+{% endif %}
+
+<br/>
+{% if alarm.reminder_sent %}
+<div class="mb-1"><strong>{{ "Reminder Sent" | t }}:</strong> {{ alarm.reminder_sent | date }}</div>
+{% endif %}

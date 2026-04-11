@@ -8,5 +8,15 @@ content_div_id = "alarm_content"
 
 
 def get_routers():
-    from routers import alarms
-    return [alarms.router]
+    from verticals.alarms import router
+    return [router.router]
+
+COLUMNS = [
+    {"key": "nr",       "label": "Nr"},
+    {"key": "date",     "label": "Date"},
+    {"key": "reminder", "label": "Reminder"},
+    {"key": "customer", "label": "Customer"},
+    {"key": "product",  "label": "Product"},
+    {"key": "note",     "label": "Note"},
+    {"key": "command",  "label": "Command"},
+]

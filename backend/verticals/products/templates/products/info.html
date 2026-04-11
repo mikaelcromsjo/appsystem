@@ -1,0 +1,300 @@
+<div x-init="$store.modal_products.title = '{{ "Product" | t }} {{ product.name }}'"></div> 
+<div x-init="$store.modal_products.submit = ''"></div> 
+
+    <div class="mt-4" id="product-info">
+
+<div class="mb-1"><strong>{{ "Name" | t }}:</strong> {{ product.name }}</div>
+
+<div class="mb-1">    <strong>{{ "Product Type" | t }}:</strong> {{ products_map[product.type_id].name }}</div>
+
+{% if product.price is not none and product.price > 0 %}
+<div class="mb-1"><strong>{{ "Price" | t }}:</strong> {{ product.price }} SEK</div>
+{% endif %}
+
+{% if product.description %}
+<div class="mb-1"><strong>{{ "Description" | t }}:</strong> {{ product.description }}</div>
+{% endif %}
+
+{% if product.start_date %}
+<div class="mb-1"><strong>{{ "Start Date" | t }}:</strong> {{ product.start_date | date }}</div>
+{% endif %}
+
+{% if product.end_date %}
+<div class="mb-1"><strong>{{ "End Date" | t }}:</strong> {{ product.end_date | date }}</div>
+{% endif %}
+
+<div class="mb-1"><strong>{{ "Product Types" | t }}:</strong>
+    {% set types = [] %}
+    {% if product.type_a %}{% set _ = types.append(filters_map["filter_a"]) %}{% endif %}
+    {% if product.type_b_ %}{% set _ = types.append(filters_map["filter_b"]) %}{% endif %}
+    {% if product.type_c %}{% set _ = types.append(filters_map["filter_c"]) %}{% endif %}
+    {% if product.type_d %}{% set _ = types.append(filters_map["filter_d"]) %}{% endif %}
+    {% if product.type_e %}{% set _ = types.append(filters_map["filter_e"]) %}{% endif %}
+    {% if product.type_f %}{% set _ = types.append(filters_map["filter_f"]) %}{% endif %}
+    {% if product.type_g %}{% set _ = types.append(filters_map["filter_g"]) %}{% endif %}
+
+
+    {{ types | join(', ') if types else '' }}
+</div>
+
+    {% set extras = [] %}
+    {% if product.extra_external %}{% set _ = extras.append('Extern') %}{% endif %}
+    {% if product.extra_non_political %}{% set _ = extras.append('Opolitisk') %}{% endif %}
+    {% if product.extra_visilble_all %}{% set _ = extras.append('Synlig för alla') %}{% endif %}
+
+{% if extras %}
+<div class="mb-1"><strong>{{ "Extra" | t }}:</strong>
+    {{ extras | join(', ') if extras else '' }}
+{% endif %}
+
+{% if totals.all > 0 %}
+
+<br/>    
+<br/>
+
+<div x-data>
+
+<div x-data="{ active: '{{ status_filter or "all" }}' }" class="flex flex-wrap gap-2 mb-4">
+    <button 
+        hx-get="{{ url_for('product_detail', product_id=product.id) }}?list=short&status_filter=2"
+        hx-target="#product-info"
+        class="px-3 py-1 border rounded hover:bg-gray-200"
+        :class="{'bg-gray-100': {{ status_filter }} === 2}" >
+        {{ "Not interested" | t }}
+        <span>{{ totals.s2 }}</span>
+    </button>
+
+    <button 
+        hx-get="{{ url_for('product_detail', product_id=product.id) }}?list=short&status_filter=1"
+        hx-target="#product-info"
+        class="px-3 py-1 border rounded hover:bg-gray-200"
+        :class="{'bg-gray-100': {{ status_filter }} === 1}" >
+        {{ "Interested" | t }}
+        <span >{{ totals.s1 }}</span>
+    </button>
+
+    <button 
+        hx-get="{{ url_for('product_detail', product_id=product.id) }}?list=short&status_filter=3"
+        hx-target="#product-info"
+        class="px-3 py-1 border rounded hover:bg-gray-200"
+        :class="{'bg-gray-100': {{ status_filter }} === 3}" >
+        {{ "Comming" | t }}
+        <span>{{ totals.s3 }}</span>
+    </button>
+
+    <!--
+{% set product_info = products_json.get(product.type_id) %}
+
+{% if product_info %}
+    {% for status_code, label in product_info['items'].items() %}
+        <button 
+            hx-get="{{ url_for('product_detail', product_id=product.id) }}?list=short&status_filter={{ status_code }}"
+            hx-target="#product-info"
+            class="px-3 py-1 border rounded hover:bg-gray-200"
+            :class="{'bg-gray-100': {{ status_filter }} == {{ status_code }}}">
+            {{ label | t }}
+            <span>{{ totals['s' ~ status_code] }}</span>
+        </button>
+    {% endfor %}
+{% endif %}
+-->
+
+    <button 
+        hx-get="{{ url_for('product_detail', product_id=product.id) }}?list=short"
+        hx-target="#product-info"
+        class="px-3 py-1 border rounded hover:bg-gray-200"
+        :class="{'bg-gray-100': {{ status_filter }} === 0}" >
+        {{ "All" | t }}
+        <span>
+            {{ totals.all }}
+        </span>
+    </button>
+
+
+</div>
+
+<table id="customer-table" class="w-full border border-gray-300 mt-2 table-fixed">
+    <thead class="bg-gray-100">
+        <tr>
+            <th class="px-3 py-2 border w-[50%]">{{ "Name" | t }}</th>
+            <th class="px-3 py-1 border w-[10%]">{{ "Not interested" | t }}</th>
+            <th class="px-3 py-1 border w-[10%]">{{ "Interested" | t }}</th>
+            <th class="px-3 py-1 border w-[10%]">{{ "Comming" | t }}</th>
+
+{% if product_info %}
+    {% for status_code, label in product_info['items'].items() %}
+        <th class="px-3 py-1 border w-[10%]">{{ label | t }}</th>
+    {% endfor %}
+{% endif %}
+
+            <th x-show="$store.customers.showSelect" class="px-2 py-1 border text-center w-[10%]" 
+                @click.stop>
+                <input type="checkbox" @change="const checkAll = $event.target.checked;
+                    document.querySelectorAll('.customerproduct-checkbox').forEach(cb => {
+                        if (cb.checked !== checkAll) {        // only toggle boxes that differ
+                            cb.checked = checkAll;
+                            cb.dispatchEvent(new Event('change')); // triggers Alpine toggle
+                        }
+                    })
+                ">
+    </th>
+
+            
+        </tr>
+    </thead>
+    <tbody>
+        {% for ec in product_customers %}
+
+{% set enableRow = user.admin > 0 or user.team_id == ec.customer.team_id %}
+<tr class="hover:bg-gray-100 {% if enableRow %} {% endif %} {% if not enableRow %} bg-gray-50 {% endif %}">
+    
+    <!-- Customer name -->
+    <td class="px-3 py-2 border">
+      {{ ec.customer.first_name }} {{ ec.customer.last_name }}
+    </td>
+
+    <!-- STATUS RADIOS -->
+
+{% set fixed_statuses = [2, 1, 3] %}
+{% set dynamic_statuses = product_info['items'].keys()|map('int') %}
+
+
+{% for status in fixed_statuses %}
+
+    <td class="px-3 border text-center">
+
+    <label class="custom-radio {% if not enableRow %}pointer-events-none{% endif %}">
+
+        <input
+        type="radio"
+        name="fixed-{{ ec.customer.id }}"
+        value="{{ status }}"
+        {% if ec.status == status %} checked {% endif %}
+
+        hx-trigger="change"
+        hx-post="{{ url_for('save_call') }}"
+        hx-swap="none"
+        hx-ext="json-enc"
+
+        hx-include="#status-form"
+        hx-vals='{
+          "customer_id": "{{ ec.customer.id }}",
+          "product_status": "{{ status }}"
+        }'
+      >
+      </label>
+    </td>
+
+    {% endfor %}
+
+{% for d_status in dynamic_statuses %}
+
+    <td class="px-3 border text-center">
+
+    <label class="custom-radio {% if not enableRow %}pointer-events-none{% endif %}">
+
+        <input
+        type="radio"
+        name="dynamic-{{ ec.customer.id }}"
+        value="{{ d_status }}"
+        {% if ec.type_status == d_status %} checked {% endif %}
+
+        hx-trigger="change"
+        hx-post="{{ url_for('save_call') }}"
+        hx-swap="none"
+        hx-ext="json-enc"
+
+        hx-include="#status-form"
+        hx-vals='{
+          "customer_id": "{{ ec.customer.id }}",
+          "product_type_status": "{{ d_status }}"
+        }'
+      >
+      </label>
+    </td>
+
+    {% endfor %}
+
+                    <td x-show="$store.customers.showSelect" class="px-2 py-1 border text-center" 
+                        @click.stop>
+                        <input x-show="'{{ enableRow }}' == 'True'" type="checkbox" class="customerproduct-checkbox"
+                            x-model="$store.customers.selected[{{ ec.customer.id }}]">
+                    </td>
+
+  </tr>
+
+        
+
+        {% endfor %}
+    </tbody>
+</table>
+<form id="status-form"
+      hx-post="{{ url_for('save_call') }}"
+      hx-swap="none"
+      hx-ext="json-enc">
+
+  <input type="hidden" name="product_id" value="{{ product.id }}">
+  <input type="hidden" name="customer_id" value="">
+  <input type="hidden" name="product_status" value="">
+  <input type="hidden" name="product_type_status" value="">
+</form>
+
+<br/>
+
+    <span
+        class="inline-flex items-center justify-center rounded border rounded bg-gray-100 px-2 py-0.5"
+        x-text="'{{ "Selected" | t }} ' + $store.customers.getSelectedIds().length"
+    ></span>
+
+<!--
+        <div class="mt-2 flex gap-2">
+            <button @click="$store.customers.toggleSelect()"
+                    class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200">
+                    
+                {{ "Toggle Select Column" | t }}
+            </button>
+-->
+        <button x-on:click="$store.customers.clearSelectedIds()"
+                class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200">
+                {{ "Clear Customers" | t }}
+        </button>
+
+            <button :hx-vals="JSON.stringify({ selected_ids: $store.customers.getSelectedIds() })" hx-post="/calls/customers"
+                hx-ext="json-enc" hx-target="#calls-customer-list"
+                class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200"
+>
+                {{ "Load Selected Customers" | t }}
+            </button>
+
+                <!-- SMS -->
+
+        <button id="mass-sms-btn"
+            class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200"
+            hx-post="/customers/data"
+            hx-ext="json-enc"
+            :hx-vals="JSON.stringify({
+                selected_ids: $store.customers.getSelectedIds()
+            })"
+            hx-swap="none"
+            hx-on="htmx:afterRequest: 
+                console.log('test', event.detail.xhr.responseText);
+                Alpine.store('customers')
+                    .setSelectedCustomerData(JSON.parse(event.detail.xhr.responseText));
+                showSmsModal(multiple=true);
+            "
+            @click="$store.modal_products.open = false"
+                            >
+                {{ "SMS" | t }}
+            </button>
+
+
+
+
+<button onclick="printTable('customer-table')" class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200">{{ "Print" | t }}</button>
+
+
+</div>
+
+    </div>
+
+    {% endif %}

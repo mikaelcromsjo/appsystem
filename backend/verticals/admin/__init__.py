@@ -8,5 +8,5 @@ content_div_id = "admin_content"
 
 
 def get_routers():
-    from routers import admin
-    return [admin.router]
+    from verticals.admin import router
+    return [router.router]

@@ -7,8 +7,16 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 
 core_templates_path = Path(__file__).parent / "core/templates"
 app_templates_path = Path(__file__).parent / "templates"
+verticals_path = Path(__file__).parent / "verticals"
+
+vertical_template_dirs = [
+    str(p / "templates")
+    for p in sorted(verticals_path.iterdir())
+    if p.is_dir() and not p.name.startswith("_") and (p / "templates").is_dir()
+]
 
 loader = ChoiceLoader([
+    FileSystemLoader(vertical_template_dirs),
     FileSystemLoader(str(app_templates_path)),
     FileSystemLoader(str(core_templates_path)),
 ])

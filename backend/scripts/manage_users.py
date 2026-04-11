@@ -10,7 +10,7 @@ Examples:
 
 Writes to both:
   - master.db: GlobalUser (auth identity, email + password)
-  - tenant DB:  local User (caller, admin flag, team info)
+  - tenant DB:  local User (team, admin flag, team info)
 
 Password is only updated when --password is explicitly passed.
 """
@@ -22,16 +22,16 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-import models.account   # noqa: F401 — register all models so SQLAlchemy resolves relationships
-import models.alarm     # noqa: F401
-import models.call      # noqa: F401
-import models.caller    # noqa: F401
-import models.company   # noqa: F401
-import models.customer  # noqa: F401
-import models.invoice   # noqa: F401
-import models.product   # noqa: F401
-import models.product_customer  # noqa: F401
-import models.tag       # noqa: F401
+import models.account  
+import models.alarm    
+import models.call     
+import models.team    
+import models.company 
+import models.customer
+import models.invoice 
+import models.product 
+import models.product_customer
+import models.tag 
 
 from getpass import getpass
 from sqlalchemy import create_engine
@@ -144,4 +144,4 @@ if __name__ == "__main__":
     parser.add_argument("--team", default=None, help="Team/caller name (optional)")
 
     args = parser.parse_args()
-    manage_user(args.tenant, args.email, args.password, args.admin, args.caller)
+    manage_user(args.tenant, args.email, args.password, args.admin, args.team)

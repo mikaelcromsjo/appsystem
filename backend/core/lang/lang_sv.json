@@ -241,5 +241,15 @@
   "Company Details": "Company Details",
   "Postal": "Postal",
   "Ok": "Ok",
-  "Price (ex. VAT)": "Price (ex. VAT)"
+  "Price (ex. VAT)": "Price (ex. VAT)",
+  "Utgått": "Utgått",
+  "Users": "Users",
+  "Back": "Back",
+  "New User": "New User",
+  "User created.": "User created.",
+  "Team": "Team",
+  "Create": "Create",
+  "Import": "Import",
+  "Scripts": "Scripts",
+  "Migration": "Migration"
 }

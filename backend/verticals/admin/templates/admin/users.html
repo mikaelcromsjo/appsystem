@@ -1,0 +1,85 @@
+<div x-data="{ showCreate: false }">
+
+  <div class="flex items-center gap-3 mb-4">
+    <button
+      hx-get="{{ url_for('admin_dashboard') }}"
+      hx-target="#admin_content"
+      class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200 text-sm">
+      ← {{ "Back" | t }}
+    </button>
+    <h2 class="text-lg font-bold">{{ "Users" | t }}</h2>
+    <button @click="showCreate = !showCreate"
+      class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200 text-sm ml-auto">
+      + {{ "New User" | t }}
+    </button>
+  </div>
+
+  {% if error %}
+  <div class="mb-3 px-3 py-2 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{{ error }}</div>
+  {% endif %}
+
+  {% if saved %}
+  <div class="mb-3 px-3 py-2 bg-green-50 border border-green-200 rounded text-green-700 text-sm">{{ "User created." | t }}</div>
+  {% endif %}
+
+  <!-- Create form -->
+  <div x-show="showCreate" x-transition class="mb-4 p-4 border rounded bg-gray-50">
+    <form
+      hx-post="{{ url_for('admin_create_user') }}"
+      hx-target="#admin_content"
+      hx-swap="innerHTML"
+      class="flex gap-3 items-end flex-wrap">
+      <div>
+        <label class="block text-xs font-medium mb-1">{{ "Email" | t }}</label>
+        <input type="email" name="email" required
+          class="border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+      </div>
+      <div>
+        <label class="block text-xs font-medium mb-1">{{ "Password" | t }}</label>
+        <input type="password" name="password" required
+          class="border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+      </div>
+      <div>
+        <label class="block text-xs font-medium mb-1">{{ "Team" | t }}</label>
+        <select name="team_id"
+          class="border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">— DEFAULT —</option>
+          {% for team in teams %}
+          <option value="{{ team.id }}">{{ team.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit"
+        class="px-4 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
+        {{ "Create" | t }}
+      </button>
+    </form>
+  </div>
+
+  <!-- Users table -->
+  <div class="full-table">
+    <table class="table-fixed w-full border overflow-x-auto">
+      <thead>
+        <tr>
+          <th class="w-[5%] px-2 py-1 border">ID</th>
+          <th class="w-[40%] px-2 py-1 border">{{ "Email" | t }}</th>
+          <th class="w-[25%] px-2 py-1 border">{{ "Team" | t }}</th>
+          <th class="w-[15%] px-2 py-1 border text-center">{{ "Admin" | t }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-2 py-1 border text-sm">{{ u.id }}</td>
+          <td class="px-2 py-1 border text-sm">{{ u.username }}</td>
+          <td class="px-2 py-1 border text-sm">{{ u.team.name if u.team else '—' }}</td>
+          <td class="px-2 py-1 border text-center text-sm">
+            {% if u.admin %}<span class="text-green-600 font-bold">✔</span>{% else %}<span class="text-gray-400">–</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>

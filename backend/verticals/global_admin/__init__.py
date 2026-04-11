@@ -9,5 +9,5 @@ content_div_id = "global_admin_content"
 
 
 def get_routers():
-    from routers import global_admin
-    return [global_admin.router]
+    from verticals.global_admin import router
+    return [router.router]

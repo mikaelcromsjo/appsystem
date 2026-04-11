@@ -8,5 +8,13 @@ content_div_id = "companies_content"
 
 
 def get_routers():
-    from routers import companies
-    return [companies.router]
+    from verticals.companies import router
+    return [router.router]
+
+COLUMNS = [
+    {"key": "company_name", "label": "Company"},
+    {"key": "name",         "label": "Name"},
+    {"key": "email",        "label": "Email"},
+    {"key": "group",        "label": "Group", "admin_only": True},
+    {"key": "command",      "label": "Command"},
+]

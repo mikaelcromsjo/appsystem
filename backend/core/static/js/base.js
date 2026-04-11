@@ -168,6 +168,17 @@ function showPopup(evt) {
 
 document.body.addEventListener('htmx:afterSwap', showPopup);
 
+// Open modal only after HTMX has loaded content into it (avoids empty flash)
+document.body.addEventListener('htmx:afterSwap', (e) => {
+  const id = e.detail.target?.id;
+  if (!id) return;
+  if (id.startsWith('modal-container-')) {
+    const slug = id.slice('modal-container-'.length);
+    const s = Alpine.store('modal_' + slug);
+    if (s) s.ready = true;
+  }
+});
+
 // === Alpine: confirm dialog ===
 document.addEventListener("alpine:init", () => {
   console.log("init event listener");
@@ -281,6 +292,13 @@ connectWS();
 
 // === Alpine stores ===
 document.addEventListener('alpine:init', () => {
+  // Per-vertical modal stores (Step 2)
+  const verticalSlugs = (document.querySelector('meta[name="verticals"]')?.content || '')
+    .split(',').filter(Boolean);
+  verticalSlugs.forEach(slug => {
+    Alpine.store('modal_' + slug, { title: '', submit: '', open: false, ready: false });
+  });
+
 
   Alpine.store('customers', {
     selected: JSON.parse(localStorage.getItem('selectedCustomers') || '{}'),
@@ -391,11 +409,6 @@ document.addEventListener('alpine:init', () => {
     type_status: "0",
   });
 
-  Alpine.store('modal', {
-    title: "",
-    submit: "",
-    open: false
-  });
 
 });
 

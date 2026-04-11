@@ -1,0 +1,41 @@
+{% macro vertical_modal(v) %}
+<div id="modal-{{ v.slug }}"
+     x-show="active === '{{ v.slug }}' && $store['modal_{{ v.slug }}'] && $store['modal_{{ v.slug }}'].ready"
+     x-transition.opacity
+     @keydown.escape.window="if (active === '{{ v.slug }}' && $store['modal_{{ v.slug }}']) { $store['modal_{{ v.slug }}'].open = false; $store['modal_{{ v.slug }}'].ready = false; }"
+     class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+     style="display:none">
+  <div class="bg-white rounded-xl shadow-lg w-full max-w-7xl mx-4 flex flex-col pointer-events-auto"
+       style="max-height:90vh;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.18)">
+    <div class="flex justify-between items-center p-4 border-b flex-shrink-0">
+      <h5 class="text-lg font-semibold"
+          x-text="$store['modal_{{ v.slug }}'] ? $store['modal_{{ v.slug }}'].title : ''"></h5>
+      <button type="button" class="text-gray-500 hover:text-gray-700 p-1 rounded"
+              @click="$store['modal_{{ v.slug }}'].open = false; $store['modal_{{ v.slug }}'].ready = false">✕</button>
+    </div>
+    <div id="modal-container-{{ v.slug }}"
+         class="p-4 overflow-y-auto flex-grow"
+         style="min-height:0"
+         x-effect="if ($store['modal_{{ v.slug }}'] && $store['modal_{{ v.slug }}'].ready) $nextTick(() => { $el.scrollTop = 0; })">
+    </div>
+    <div class="p-4 border-t flex-shrink-0 flex justify-end gap-2">
+      <button type="button" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              @click="$store['modal_{{ v.slug }}'].open = false; $store['modal_{{ v.slug }}'].ready = false">
+        {{ "Close" | t }}
+      </button>
+      <template x-if="$store['modal_{{ v.slug }}'] && $store['modal_{{ v.slug }}'].submit">
+        <button type="button"
+                class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-500"
+                @click="document.querySelector('#modal-container-{{ v.slug }} form').requestSubmit()">
+          <span x-text="$store['modal_{{ v.slug }}'].submit"></span>
+        </button>
+      </template>
+    </div>
+  </div>
+</div>
+<div x-effect="if ($store['modal_{{ v.slug }}'] && !$store['modal_{{ v.slug }}'].open) {
+       $store['modal_{{ v.slug }}'].title = '';
+       $store['modal_{{ v.slug }}'].submit = '';
+       $store['modal_{{ v.slug }}'].ready = false;
+     }"></div>
+{% endmacro %}

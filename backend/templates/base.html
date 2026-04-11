@@ -211,7 +211,7 @@
 
 
 
-    <header class="bg-white shadow sticky top-0 z-10" x-data="{ open: false }">
+    <header class="bg-white shadow sticky top-0 z-[60]" x-data="{ open: false }">
       <div class="w-full mx-auto px-4 py-1 flex items-center justify-between">
 
         <!-- App name -->
@@ -311,6 +311,11 @@
       </div>
       {% endfor %}
     </main>
+
+  {% from "components/modal.html" import vertical_modal %}
+  {% for v in nav_verticals %}
+    {{ vertical_modal(v) }}
+  {% endfor %}
   </div>
 
   <!-- SMS modal -->
@@ -339,64 +344,6 @@
   </div>
 
 
-  <!-- Global Modal Container -->
-  <div x-data x-show="$store.modal.open" x-transition.opacity @keydown.escape.window="$store.modal.open = false"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" style="display: none;">
-    <!-- Modal box -->
-    <div class="bg-white rounded-xl shadow-lg w-full max-w-7xl mx-4 flex flex-col"
-      style="max-height: 90vh; overflow: hidden;" x-transition.scale>
-      <!-- Modal header -->
-      <div class="flex justify-between items-center p-4 border-b flex-shrink-0">
-        <h5 class="text-lg font-semibold" x-text="$store.modal.title"></h5>
-        <div class="flex items-center gap-2">
-          <!-- Save button 
-        <button 
-          type="button"
-          class="text-green-600 p-1 rounded hover:bg-green-100"
-          title="Save"
-          @click="
-            console.log('save');
-            const f = document.querySelector('#modal-container form');
-            if (f) f.requestSubmit();
-          "
-        >
-          <i class="bi bi-save fs-3"></i>
-        </button>-->
-
-          <!-- Close button -->
-          <button type="button" class="text-gray-500 hover:text-gray-700 p-1 rounded"
-            @click="$store.modal.open = false">
-            ✕
-          </button>
-        </div>
-      </div>
-
-      <!-- Modal body -->
-      <div id="modal-container" class="p-4 overflow-y-auto flex-grow" style="min-height: 0;"
-        x-effect="if ($store.modal.open) $nextTick(() => { $el.scrollTop = 0; });">
-        <!-- HTMX content goes here -->
-      </div>
-
-      <div class="p-4 border-t flex-shrink-0 flex justify-end gap-2">
-        <button type="button" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-          @click="$store.modal.open = false">
-          {{ "Close" | t }}
-        </button>
-
-        <!-- Close o 200 responce -->
-        <div x-data>
-          <!-- Button shows only if submit text is not empty -->
-          <template x-if="$store.modal.submit && $store.modal.submit !== ''">
-            <button type="button"
-              class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-500 disabled:bg-green-800"
-              @click="document.querySelector('#modal-container form').requestSubmit();">
-              <span x-text="$store.modal.submit"></span>
-            </button>
-          </template>
-        </div>
-      </div>
-    </div>
-  </div>
 
 
 
@@ -469,13 +416,11 @@
 
 
 
-  <!-- empty title when modal.open is false-->
-  <div x-data x-effect="if (!$store.modal.open) {
-            $store.modal.title = '';
-            $store.modal.submit = '';
-        }"></div>
 
   <meta name="htmx-history-cache-size" content="0">
 
+
+  <!-- Per-vertical slugs for base.js store init (Step 2) -->
+  <meta name="verticals" content="{{ nav_verticals | map(attribute='slug') | join(',') }}">
 
   <script src="/static/js/base.js"></script>

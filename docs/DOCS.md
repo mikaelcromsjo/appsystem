@@ -10,6 +10,7 @@
 
 ## Reports & planning
 - [REPORT_MODULARITY.md](REPORT_MODULARITY.md) — multi-vertical SaaS modularity, AI codegen, missing infrastructure
+- [PLAN_customer_extra_migration.md](PLAN_customer_extra_migration.md) — move code_name, controlled, filter_a–h from columns into customer.extra JSON (5 staged steps)
 
 ## Per-file (complex files only)
 - [populate.py.md](../backend/core/functions/populate.py.md)

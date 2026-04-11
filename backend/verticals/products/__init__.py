@@ -8,5 +8,13 @@ content_div_id = "product_content"
 
 
 def get_routers():
-    from routers import products
-    return [products.router]
+    from verticals.products import router
+    return [router.router]
+
+COLUMNS = [
+    {"key": "nr",         "label": "Nr",         "class": "w-[5%]"},
+    {"key": "name",       "label": "Name",        "class": "w-[30%]"},
+    {"key": "type",       "label": "Product Typ", "class": "w-[30%]"},
+    {"key": "start_date", "label": "Start Date",  "class": "w-[30%]"},
+    {"key": "command",    "label": "Command",     "class": "w-[30%]", "admin_only": True},
+]

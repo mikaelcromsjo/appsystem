@@ -1,0 +1,19 @@
+{#
+  table_head_row(columns)
+  Renders one <th> per column entry.  Wrap in <thead><tr>...</tr></thead> in the calling template.
+
+  Column schema:
+    key        str   — identifier
+    label      str   — translatable header text
+    class      str   — optional extra CSS classes (e.g. "w-[30%]")
+    admin_only bool  — wraps th with x-show="is_admin"
+    sortable   bool  — reserved for future sort affordance
+#}
+{% macro table_head_row(columns) %}
+  {% for col in columns %}
+  <th {% if col.get('admin_only') %}x-show="is_admin" {% endif %}
+      class="{{ col.get('class', '') }} px-2 py-1 border">
+    {{ col.label | t }}
+  </th>
+  {% endfor %}
+{% endmacro %}
