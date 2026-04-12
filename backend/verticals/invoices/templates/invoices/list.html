@@ -8,71 +8,12 @@
 <thead>
                 <tr>{{ table_head_row(columns) }}</tr>
             </thead>
-            <div>
-            <tbody>
-                {% for invoice in invoices %}
-                <tr hx-get="{{ url_for('invoice_detail', invoice_id=invoice.id) }}"
-                    hx-target="#modal-container-invoices"
-                    hx-trigger="click"
-                    :class="{
-                            'bg-blue-100 font-bold hover:bg-blue-200 text-blue-600': selectedRow == {{ loop.index }},
-                            'bg-white hover:bg-gray-100 text-gray-900': selectedRow != {{ loop.index }}
-                        }"
-                    class="cursor-pointer"
-                    @click="selectedRow = {{ loop.index }}; $store.modal_invoices.open = true"
-                    >
-                    
-                    <td class="px-2 py-1 border">{{ invoice.id }}</td>
-                    <td class="px-2 py-1 border">{{ invoice.number }}</td>
-                    <td class="px-2 py-1 border">{{ invoice.date.strftime('%Y-%m-%d') }}</td>
-                    <td class="px-2 py-1 border">{{ invoice.note }}</td>
-                    <td class="px-2 py-1 border">
-                    {{ invoice.company.extra.company_name if invoice.company else '' }} </td>  
-
-                    {% set status = '' %}
-
-                    {% if invoice.extra.status == '1' %}
-                        {% set status = "Processing" | t %}
-                    {% elif invoice.extra.status == '2' %}
-                        {% set status = "OK" | t %}
-                    {% elif invoice.extra.status == '3' %}
-                        {% set status = "Cancelled" | t %}
-                    {% endif %}
-                    
-                    <td class="px-2 py-1 border">{{ status }}</td>
-                    <td x-show="is_admin" class="px-2 py-1 border">{{ invoice.team.name }}</td>
-
-               <td class="px-2 py-1 border text-center" 
-                        @click.stop
-                        >
-
-                        <button x-show="'{{invoice.extra.status}}' == '1' || ('{{invoice.extra.status}}' == '2' && {{ is_admin }})"
-                            hx-get="{{ url_for('invoice_detail', invoice_id=invoice.id) }}"
-                            hx-target="#modal-container-invoices"
-                            hx-swap="innerHTML"
-                            @click="$store.modal_invoices.open = true"
-                        >
-                            {{ "Edit" | t }}
-                        </button>                
-                        
-                        <button x-show="{{invoice.extra.status}} == '1'"
-                            hx-post="{{ url_for('delete_invoice', invoice_id=invoice.id) }}"
-                            hx-on="htmx:afterRequest: showPopup(event); htmx.ajax('GET', '{{ url_for('invoices_list') }}', {target:'#invoice-container'});"
-                            hx-trigger="confirmed"
-                            x-confirm="{{'Are you sure you want to delete this record?' | t }}"
-                        >
-                            {{ "Delete" | t }}
-                        </button>
-<button x-show="{{invoice.extra.status}} == '2' || {{invoice.extra.status}} == '3'" @click="window.open('{{ url_for('invoice_detail', invoice_id=invoice.id) }}?list=pdf', '_blank')">
-    {{ "PDF" | t }}
-</button>      
-
-                    </td>
-
-                </tr>
-                {% endfor %}
+            <tbody id="invoices-tbody"
+                hx-get="{{ url_for('invoices_rows') }}"
+                hx-trigger="invoicesRowsReload from:body"
+                hx-swap="innerHTML">
+                {% include "invoices/rows.html" %}
             </tbody>
-            </div>
         </table>
             </div>
         <div class="mt-2 flex gap-2">

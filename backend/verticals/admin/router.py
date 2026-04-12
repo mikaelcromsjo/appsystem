@@ -269,8 +269,6 @@ def create_customer_from_row(row: dict, db):
         description_phone=row.get("description_phone"),
         location=row.get("location"),
         contributes=int(row.get("contributes") or 0) or None,
-        previous_caller=_parse_json_field(row.get("previous_caller")),
-        previous_categories=_parse_json_field(row.get("previous_categories")),
         comment=row.get("comment"),
         sub_caller=row.get("sub_caller"),
         organisations=_parse_id_list(row.get("organisations")),
@@ -433,6 +431,81 @@ async def admin_create_user(
     db.commit()
 
     users = db.query(User).order_by(User.id).all()
+    return templates.TemplateResponse(
+        "admin/users.html",
+        {"request": request, "users": users, "teams": teams, "saved": True},
+    )
+
+
+@router.post("/users/create-team", response_class=HTMLResponse, name="admin_create_team")
+async def admin_create_team(
+    request: Request,
+    name: str = Form(...),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    if user.admin <= 0:
+        return HTMLResponse("Access denied", status_code=403)
+
+    name = name.strip()
+    if not name:
+        users = db.query(User).order_by(User.id).all()
+        teams = db.query(Team).order_by(Team.name).all()
+        return templates.TemplateResponse(
+            "admin/users.html",
+            {"request": request, "users": users, "teams": teams,
+             "error": "Team name cannot be empty."},
+        )
+
+    existing_team = db.query(Team).filter_by(name=name).first()
+    if existing_team:
+        users = db.query(User).order_by(User.id).all()
+        teams = db.query(Team).order_by(Team.name).all()
+        return templates.TemplateResponse(
+            "admin/users.html",
+            {"request": request, "users": users, "teams": teams,
+             "error": f"Team '{name}' already exists."},
+        )
+
+    team = Team(name=name)
+    db.add(team)
+    db.commit()
+
+    users = db.query(User).order_by(User.id).all()
+    teams = db.query(Team).order_by(Team.name).all()
+    return templates.TemplateResponse(
+        "admin/users.html",
+        {"request": request, "users": users, "teams": teams, "saved": True},
+    )
+
+
+@router.post("/users/{user_id}/update-team", response_class=HTMLResponse, name="admin_update_user_team")
+async def admin_update_user_team(
+    request: Request,
+    user_id: int,
+    team_id: str = Form(...),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    if user.admin <= 0:
+        return HTMLResponse("Access denied", status_code=403)
+
+    target_user = db.query(User).filter_by(id=user_id).first()
+    if not target_user:
+        users = db.query(User).order_by(User.id).all()
+        teams = db.query(Team).order_by(Team.name).all()
+        return templates.TemplateResponse(
+            "admin/users.html",
+            {"request": request, "users": users, "teams": teams,
+             "error": "User not found."},
+        )
+
+    resolved_team_id = int(team_id) if team_id and team_id != "" else None
+    target_user.team_id = resolved_team_id
+    db.commit()
+
+    users = db.query(User).order_by(User.id).all()
+    teams = db.query(Team).order_by(Team.name).all()
     return templates.TemplateResponse(
         "admin/users.html",
         {"request": request, "users": users, "teams": teams, "saved": True},

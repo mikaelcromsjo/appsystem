@@ -3,7 +3,7 @@
 
 <form 
     hx-post="{{ url_for('set_filter') }}"
-    hx-target="#customer-list"
+    hx-target="#customers-tbody"
     hx-swap="innerHTML"
     hx-ext="json-enc"
     class="space-y-4"
@@ -110,12 +110,12 @@
         </select>
     </div>
 
-    <!-- Caller (Select) -->
+    <!-- Team (Select) -->
     <div>
-        <label class="block font-semibold">{{ "Caller" | t }}</label>
+        <label class="block font-semibold">{{ "Team" | t }}</label>
         <select name="team_id" multiple class="border p-1 w-full">
-            {% for team in callers %}
-              <option value="{{ team.id }}" {% if team.id|string in filter_dict.get('caller', []) %}selected{% endif %}>{{ team.name }}</option>
+            {% for team in teams %}
+              <option value="{{ team.id }}" {% if team.id|string in filter_dict.get('team_id', []) %}selected{% endif %}>{{ team.name }}</option>
             {% endfor %}
         </select>
         <select name="team_id_type" class="border p-1 mt-1">

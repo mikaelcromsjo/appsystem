@@ -276,7 +276,12 @@ async def save_call(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    
+    if not user.team_id:
+        raise HTTPException(
+            status_code=400,
+            detail="User must be assigned to a team to create calls"
+        )
+
     product_id = update_data.product_id
     product_status = getattr(update_data, "product_status", None)
     product_type_status = getattr(update_data, "product_type_status", None)
@@ -397,14 +402,14 @@ async def save_call(
         except ValidationError as e:
             raise HTTPException(status_code=422, detail=e.errors())
 
+        # Set team_id from logged in user (must be before db.add for new calls)
+        call.team_id = user.team_id
+
         # Set call_date for new calls
         if not existing_call:
             call.call_date = datetime.now(timezone.utc)
             call.id = None  # let DB auto-generate if using Integer PK
             db.add(call)
-
-        # set team_id from logged in user
-        call.team_id = user.team_id
 
         if (not call.note):
             call.note=""

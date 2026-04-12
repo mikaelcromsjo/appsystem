@@ -4,9 +4,8 @@
 
 <form 
     hx-post="{{ url_for('upsert_product') }}"
-    hx-target="#product-list" 
     hx-ext="json-enc"
-    hx-swap="innerHTML"
+    hx-swap="none"
     x-init="
     $el.addEventListener('htmx:afterRequest', (event) => {
         if (event.detail.xhr.status === 200) {

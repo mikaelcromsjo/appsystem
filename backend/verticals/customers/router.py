@@ -78,6 +78,19 @@ def customers_list(
         }
     )
 
+
+@router.get("/rows", response_class=HTMLResponse, name="customers_rows")
+def customers_rows(
+    request: Request,
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user),
+):
+    customers = get_user_customers(db, request, user)
+    return templates.TemplateResponse(
+        "customers/rows.html",
+        {"request": request, "customers": customers},
+    )
+
 @router.post("/data", name="customers_data")
 def customers_data(
     request: Request,
@@ -239,20 +252,9 @@ async def upsert_customer(
     db.commit()
     db.refresh(data_record)
 
-    # Render updated list (HTMX swap)
-    customers = get_user_customers(db, request, user)
-    
-    response =  templates.TemplateResponse(
-        "customers/list.html",
-        {
-            "request": request, 
-            "customers": customers,
-            "detail": "Updated"},
-    )
-
-    # Set the popup message in a custom header
+    response = HTMLResponse("")
     response.headers["HX-Popup-Message"] = "Saved"
-    response.headers["HX-Trigger"] = "callsCustomersReload"
+    response.headers["HX-Trigger"] = json.dumps({"callsCustomersReload": True, "customersRowsReload": True})
     return response
 
 @router.get("/customer/{customer_id}", response_class=HTMLResponse)
@@ -262,6 +264,7 @@ def customer_detail(
     user = Depends(get_current_user),
     list: str | None = Query(default=None),
     status_filter: int | None = Query(default=None),
+    modal_store: str = Query(default="customers"),
     db: Session = Depends(get_db),
     cms: CmsConfig = Depends(get_cms_config),
 ):
@@ -321,9 +324,9 @@ def customer_detail(
         return templates.TemplateResponse(
             "customers/info.html",
             {
-                "request": request, 
-                "customer": customer, 
-                "customer_id": customer_id, 
+                "request": request,
+                "customer": customer,
+                "customer_id": customer_id,
                 "categories_map": cms.categories_map,
                 "organisations_map": cms.organisations_map,
                 "filters_map": cms.filters_map,
@@ -331,7 +334,8 @@ def customer_detail(
                 "teams": teams,
                 "product_customers": product_customers,
                 "totals": totals,
-                "status_filter": status_filter
+                "status_filter": status_filter,
+                "modal_store": modal_store
             }
         )
     else:
@@ -339,13 +343,14 @@ def customer_detail(
         return templates.TemplateResponse(
             "customers/edit.html",
             {
-                "request": request, 
-                "customer": customer, 
+                "request": request,
+                "customer": customer,
                 "categories": cms.categories,
                 "organisations": cms.organisations,
                 "filters_json": cms.filters,
                 "personalities": cms.personalities,
                 "teams": teams,
+                "modal_store": modal_store,
             }
         )  
          
@@ -384,13 +389,13 @@ def customer_filter(
     return templates.TemplateResponse(
         "customers/filter.html",
         {
-            "request": request, 
-            "filter_dict": filter_dict, 
+            "request": request,
+            "filter_dict": filter_dict,
             "categories": cms.categories,
             "organisations": cms.organisations,
             "c_filters": cms.filters,
             "personalities": cms.personalities,
-            "callers": callers,
+            "teams": teams,
         }
     )
 
@@ -405,14 +410,8 @@ async def set_filter(
 ):
     data_dict = update_data.model_dump()
 
-    # save filters definition (not SQLAlchemy objects) in session
-    request.session["customer_filters"] = data_dict 
+    request.session["customer_filters"] = data_dict
 
-    customers = get_user_customers(db, request, user)
-    callers = db.query(Team).all()
-
-    return templates.TemplateResponse(
-        "customers/list.html",
-        {"request": request, "customers": customers, "callers": callers
-        }
-    )
+    response = HTMLResponse("")
+    response.headers["HX-Trigger"] = "customersRowsReload"
+    return response

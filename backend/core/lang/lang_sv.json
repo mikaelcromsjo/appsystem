@@ -251,5 +251,10 @@
   "Create": "Create",
   "Import": "Import",
   "Scripts": "Scripts",
-  "Migration": "Migration"
+  "Migration": "Migration",
+  "Teams": "Teams",
+  "New Team Name": "New Team Name",
+  "Create Team": "Create Team",
+  "Actions": "Actions",
+  "Select Team...": "Select Team..."
 }

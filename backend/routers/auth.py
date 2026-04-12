@@ -130,6 +130,11 @@ async def _complete_login(request: Request, master_db: Session, global_user_id: 
     from core.models.base import Base
     from sqlalchemy.orm import sessionmaker
 
+    # Import all models to register them with Base.metadata before create_all
+    import models.account, models.alarm, models.call, models.company  # noqa: F401
+    import models.customer, models.invoice, models.product, models.product_customer  # noqa: F401
+    import models.tag, models.team  # noqa: F401
+
     tenant_engine = _get_tenant_engine(tenant.db_url)
     # Ensure schema exists (safe on existing DBs — create_all is idempotent)
     Base.metadata.create_all(bind=tenant_engine)
@@ -218,6 +223,13 @@ async def create_user(
     master_db.commit()
 
     # Create local User in tenant DB
+    # If no team_id provided, assign to default "Admin" team
+    if not team_id:
+        from models.team import Team
+        default_team = db.query(Team).filter_by(name="Admin").first()
+        if default_team:
+            team_id = default_team.id
+
     new_user = User(username=email, team_id=team_id, global_user_id=global_user.id)
     db.add(new_user)
     db.commit()

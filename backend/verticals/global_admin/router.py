@@ -74,6 +74,11 @@ async def tenant_create(
     master_db.flush()
 
     # Provision schema in the new tenant DB
+    # Must import all models to register them with Base.metadata before create_all
+    import models.account, models.alarm, models.call, models.company  # noqa: F401
+    import models.customer, models.invoice, models.product, models.product_customer  # noqa: F401
+    import models.tag, models.team  # noqa: F401
+
     tenant_engine = _get_tenant_engine(db_url)
     Base.metadata.create_all(bind=tenant_engine)
 

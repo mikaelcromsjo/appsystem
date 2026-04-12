@@ -1,18 +1,17 @@
-<div x-init="$store.modal_customers.title = '{{ "Customer" | t }}: {{ customer.first_name }} {{ customer.last_name }}'"></div> 
-<div x-init="$store.modal_customers.submit = '{{ "Save" | t }}'"></div> 
+<div x-init="$store['modal_{{ modal_store }}'].title = '{{ "Customer" | t }}: {{ customer.first_name }} {{ customer.last_name }}'"></div>
+<div x-init="$store['modal_{{ modal_store }}'].submit = '{{ "Save" | t }}'"></div>
 
 <form
     hx-post="{{ url_for('upsert_customer') }}"
-    hx-target="#customer-list"
     hx-validate="true"
-    hx-on:submit="if (!this.reportValidity()) { event.preventDefault(); return false; }" 
-    hx-swap="innerHTML"
+    hx-on:submit="if (!this.reportValidity()) { event.preventDefault(); return false; }"
+    hx-swap="none"
     hx-ext="json-enc"
     hx-headers='{"Content-Type": "application/json"}'
     x-init="
         $el.addEventListener('htmx:afterRequest', (event) => {
             if (event.detail.xhr.status === 200) {
-                $store.modal_customers.open = false;
+                $store['modal_{{ modal_store }}'].open = false;
             } else if (event.detail.xhr.status >= 400) {
                 showPopup(event);
             }
@@ -84,12 +83,12 @@
         </select>
     </div>
 
-    <!-- Caller -->
+    <!-- Team -->
     <div class="mb-2">
-        <label class="block font-semibold">{{ "Caller" | t }}</label>
+        <label class="block font-semibold">{{ "Team" | t }}</label>
         <select name="team_id" class="border p-1 w-full">
             <option value="" {% if customer.team is none %}selected{% endif %}>{{ "Select..." | t }}</option>
-            {% for team in callers %}
+            {% for team in teams %}
               <option value="{{ team.id }}" {% if customer.team_id == team.id %}selected{% endif %}>{{ team.name }}</option>
             {% endfor %}
         </select>

@@ -30,6 +30,19 @@ def accounts_list(
         {"request": request, "accounts": accounts, "columns": COLUMNS}
     )
 
+
+@router.get("/rows", response_class=HTMLResponse, name="accounts_rows")
+def accounts_rows(
+    request: Request,
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user),
+):
+    accounts = db.query(Account).all()
+    return templates.TemplateResponse(
+        "accounts/rows.html",
+        {"request": request, "accounts": accounts},
+    )
+
 # -------------------------------------------------
 # Detail / New
 # -------------------------------------------------
@@ -98,13 +111,9 @@ async def upsert_account(
     db.commit()
     db.refresh(account)
 
-    accounts = db.query(Account).all()
-    
-    response = templates.TemplateResponse(
-        "accounts/list.html",
-        {"request": request, "accounts": accounts, "detail": "Updated"}
-    )
+    response = HTMLResponse("")
     response.headers["HX-Popup-Message"] = "Saved"
+    response.headers["HX-Trigger"] = "accountsRowsReload"
     return response
 
 # -------------------------------------------------

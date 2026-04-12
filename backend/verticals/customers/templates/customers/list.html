@@ -27,82 +27,11 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody x-init="$store.customers.initInTable()">
-                            {% for customer in customers %}
-                        <tr                                      data-id="{{ customer.id }}"
-
-                            x-show="$store.customers.isRowVisible({{customer.id}})"
-                            hx-get="{{ url_for('customer_detail', customer_id=customer.id) }}?list=short"
-                            hx-target="#modal-container-customers" 
-                            hx-trigger="click" class="cursor-pointer" :class="{
-                            'bg-green-100 font-bold text-green-600': selectedRow === {{ loop.index }},
-                            'bg-white hover:bg-gray-100 text-gray-900': selectedRow != {{ loop.index }}
-                        }" class="cursor-pointer" 
-                        @click="selectedRow = {{ loop.index  }}; $store.modal_customers.open = true">
-
-{% set number = 0 %}  {# Default fallback value #}
-{% if customer.last_call_date is not none %}
-    {# Convert to date safely #}
-    {% set last_call = customer.last_call_date %}
-    {% set last_call_date = last_call.date() if last_call.__class__.__name__ == 'datetime' else None %}
-
-    {% if last_call_date is not none %}
-        {% set delta_days = (now().date() - last_call_date).days %}
-
-        {% if delta_days == 0 %}
-            {% set number = 600 %}
-        {% elif delta_days == 1 %}
-            {% set number = 500 %}
-        {% elif delta_days == 2 %}
-            {% set number = 400 %}
-        {% elif delta_days <= -1 %}
-            {% set number = 0 %}
-        {% elif delta_days <= 7 %}
-            {% set number = 300 %}
-        {% elif delta_days <= 14 %}
-            {% set number = 200 %}
-        {% elif delta_days <= 21 %}
-            {% set number = 100 %}
-        {% elif delta_days <= 28 %}
-            {% set number = 50 %}
-        {% else %}
-            {% set number = 0 %}
-        {% endif %}
-    {% endif %}
-{% endif %}
-                                
-                                <td class="px-2 py-1 border bg-green-{{number}} ">{{
-                                loop.index }}</td>
-                                <td class="px-2 py-1 border">{{ customer.first_name }} {{ customer.last_name }}</td>
-                                <td class="px-2 py-1 border">{{ customer.email or ''}}</td>
-                                <td class="px-2 py-1 border">{{ customer.phone or ''}}</td>
-                                <td class="px-2 py-1 border">{{ customer.location or '' }}</td>
-                                <td x-show="is_admin" class="px-2 py-1 border">{{ customer.team.name }}</td>
-
-                                <td class="px-2 py-1 border text-center" @click.stop>
-
-                                    <button hx-get="{{ url_for('customer_detail', customer_id=customer.id) }}"
-                                        hx-target="#modal-container-customers" hx-swap="innerHTML"
-                                        @click="$store.modal_customers.open = true;">
-                                        {{ "Edit" | t }}
-                                    </button>
-                                    <button x-show="is_admin"
-                                        hx-post="{{ url_for('delete_customer', customer_id=customer.id) }}" hx-on="htmx:afterRequest: 
-                                showPopup(event);
-                                htmx.ajax('GET', '{{ url_for('customers_list') }}', {target:'#customer-container'}); "
-                                        hx-trigger="confirmed"
-                                        x-confirm="{{'Are you sure you want to delete this record?' | t }}">
-                                        {{ "Delete" | t }}
-                                    </button>
-                                </td>
-
-                                <td                                      
-                                    class="px-2 py-1 border text-center" @click.stop>
-                                    <input data-id="{{ customer.id }}" type="checkbox" class="customer-checkbox"
-                            x-model="$store.customers.selected[{{ customer.id }}]">
-                                </td>
-                        </tr>
-                        {% endfor %}
+                    <tbody id="customers-tbody" x-init="$store.customers.initInTable()"
+                        hx-get="{{ url_for('customers_rows') }}"
+                        hx-trigger="customersRowsReload from:body"
+                        hx-swap="innerHTML">
+                            {% include "customers/rows.html" %}
                     </tbody>
                 </table>
             </div>
@@ -118,7 +47,7 @@
                 {{ "Filter" | t }}
             </button>
 
-            <button hx-post="{{ url_for('set_filter') }}" hx-target="#customer-list" hx-swap="innerHTML"
+            <button hx-post="{{ url_for('set_filter') }}" hx-target="#customers-tbody" hx-swap="innerHTML"
                 hx-ext="json-enc" class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200">
 
                 {{ "Clear Filter" | t }}
@@ -184,11 +113,11 @@
                     {{ 'Assign' | t }}
                 </button>
 
-                <!-- Caller selection -->
+                <!-- Team selection -->
                 <select id="team-select" name="team_id" x-model="team_id" class="border p-1">
 
-                    <option value="">{{ 'Select Caller...' | t }}</option>
-                    {% for team in callers %}
+                    <option value="">{{ 'Select Team...' | t }}</option>
+                    {% for team in teams %}
                     <option value="{{ team.id }}">{{ team.name }}</option>
                     {% endfor %}
                 </select>

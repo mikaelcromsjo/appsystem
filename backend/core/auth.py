@@ -21,6 +21,15 @@ def get_current_user(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+
+    # Auto-assign default team if user doesn't have one
+    if not user.team_id:
+        from models.team import Team
+        default_team = db.query(Team).filter_by(name="Admin").first()
+        if default_team:
+            user.team_id = default_team.id
+            db.commit()
+
     return user
 
 

@@ -13,7 +13,7 @@ backend/
     config.py      env-based constants: JWT_SECRET_KEY, SESSION_SECRET,
                    ACCESS_TOKEN_EXPIRE_MINUTES, DEBUG, SUPPORTED_LANGUAGES,
                    SMTP_*, ADMIN_EMAIL, ADMIN_PASSWORD, APP_BASE_URL
-    auth.py        get_current_user() — FastAPI dependency
+    auth.py        get_current_user() — FastAPI dependency; auto-assigns "Admin" team if user.team_id is None
     database.py    multi-tenant engines; get_db() (tenant), get_master_db(),
                    init_admin_user(), _get_tenant_engine() cache
     email.py       send_login_link() — SMTP 2FA email
@@ -42,7 +42,7 @@ backend/
     tag.py         Tag, TagLink (polymorphic tagging)
     alarm.py       Alarm
     call.py        Call, CallUpdate
-    caller.py      Team  (table: teams; has account_id FK)
+    team.py        Team  (table: teams; has account_id FK)
     company.py     Company, CompanyUpdate
     customer.py    Customer, CustomerUpdate  (tags validator built-in)
     invoice.py     Invoice, InvoiceNumber, InvoiceUpdate  (team_id FK → Team)
@@ -62,7 +62,7 @@ backend/
     companies.py   /companies/*
     tags.py        /tags/*
     user.py        /user/*
-    admin.py       /admin/*
+    admin.py       /admin/* — includes POST /users/create-team, POST /users/{id}/update-team
 
   functions/
     customers.py   get_user_customers(), get_selected_ids(), assign_customers_team()

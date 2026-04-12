@@ -3,9 +3,8 @@
 
 <form 
     hx-post="{{ url_for('upsert_invoice') }}"
-    hx-target="#invoice-container" 
     hx-ext="json-enc"
-    hx-swap="innerHTML"
+    hx-swap="none"
     x-init="
         $el.addEventListener('htmx:afterRequest', (event) => {
             if (event.detail.xhr.status === 200) {

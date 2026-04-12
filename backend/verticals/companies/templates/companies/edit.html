@@ -3,8 +3,7 @@
 
 <form
     hx-post="{{ url_for('upsert_company') }}"
-    hx-target="#company-list"
-    hx-swap="innerHTML"
+    hx-swap="none"
     hx-ext="json-enc"
     hx-headers='{"Content-Type": "application/json"}'
     x-init="
@@ -112,12 +111,12 @@
         <input type="text" name="phone" value="{{ company.phone or '' }}" class="border p-1 w-full"/>
     </div>
 
-    <!-- Caller 
+    <!-- Team
     <div class="mb-2">
-        <label class="block font-semibold">{{ "Caller" | t }}</label>
+        <label class="block font-semibold">{{ "Team" | t }}</label>
         <select name="team_id" class="border p-1 w-full">
             <option value="" {% if company.team is none %}selected{% endif %}>{{ "Select..." | t }}</option>
-            {% for team in callers %}
+            {% for team in teams %}
               <option value="{{ team.id }}" {% if company.team_id == team.id %}selected{% endif %}>{{ team.name }}</option>
             {% endfor %}
         </select>

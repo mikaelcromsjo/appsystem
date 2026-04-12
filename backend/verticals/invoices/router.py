@@ -141,6 +141,21 @@ def invoices_list(
     )
 
 
+@router.get("/rows", response_class=HTMLResponse, name="invoices_rows")
+def invoices_rows(
+    request: Request,
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user),
+):
+    query = db.query(Invoice)
+    if not user.admin:
+        query = query.filter(Invoice.team_id == user.team_id)
+    invoices = query.all()
+    return templates.TemplateResponse(
+        "invoices/rows.html",
+        {"request": request, "invoices": invoices, "is_admin": getattr(user, "admin", False)},
+    )
+
 
 # -----------------------------
 # Invoice Detail Modal (HTMX fragment)
@@ -357,12 +372,9 @@ async def upsert_invoice(
         query = db.query(Invoice).filter(Invoice.team_id == user.team_id)
     invoices = query.all()
 
-    response = templates.TemplateResponse(
-        "invoices/list.html",
-        {"request": request, "invoices": invoices},
-    )
-    # Set the popup message in a custom header
+    response = HTMLResponse("")
     response.headers["HX-Popup-Message"] = "Saved"
+    response.headers["HX-Trigger"] = "invoicesRowsReload"
     return response
 
 

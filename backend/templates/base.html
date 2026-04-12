@@ -103,6 +103,8 @@
       /* enable horizontal scrolling */
       display: block;
       /* required for overflow to work */
+      isolation: isolate;
+      /* contain thead z-index so it can't overlap elements outside this div */
     }
 
 
@@ -114,7 +116,7 @@
       position: sticky;
       top: 0;
       background: white;
-      z-index: 0;
+      z-index: 1;
       box-shadow:
         inset 1px 0 0 #ccc,
         /* left border */
@@ -211,7 +213,7 @@
 
 
 
-    <header class="bg-white shadow sticky top-0 z-[60]" x-data="{ open: false }">
+    <header class="bg-white shadow sticky top-0 z-[99999]" x-data="{ open: false }">
       <div class="w-full mx-auto px-4 py-1 flex items-center justify-between">
 
         <!-- App name -->
@@ -233,18 +235,6 @@
 
         <!-- NAVIGATION (Desktop) -->
         <nav class="hidden md:flex items-center space-x-4">
-          <!-- User Info -->
-          <div class="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded">
-            {% set tenant_slug = request.session.get("tenant_slug") %}
-            {% if tenant_slug %}<span class="text-xs text-gray-400 font-medium uppercase">{{ tenant_slug }}</span>{% endif %}
-            <span>{{ caller }}</span>
-            <form method="get" action="/logout" class="inline">
-              <button type="submit" class="text-gray-600 hover:text-red-600">
-                {{ "Logout" | t }}
-              </button>
-            </form>
-          </div>
-
           <!-- Shared buttons template — generated from loaded verticals -->
           <template x-ref="navButtons">
             {% for v in nav_verticals %}
@@ -259,8 +249,31 @@
             {% endfor %}
           </template>
 
+
           <!-- Render them -->
           <div x-html="$refs.navButtons.innerHTML"></div>
+
+
+          <!-- User Menu -->
+          <div x-data="{ userMenuOpen: false }" class="relative">
+            <button @click="userMenuOpen = !userMenuOpen" style="width: 30px; height: 30px;" class="rounded-full bg-blue-500 text-white font-semibold flex items-center justify-center hover:bg-blue-600 transition">
+              {{ (user[0] | upper) if user else 'U' }}
+            </button>
+            <div x-show="userMenuOpen" @click.outside="userMenuOpen = false" x-transition class="fixed top-16 w-48 bg-white rounded shadow-lg border border-gray-200 z-[999999]" style="right: 120px;">
+              <div class="px-4 py-3 border-b border-gray-100">
+                <p class="font-semibold text-gray-900">{{ user }}</p>
+                <p class="text-sm text-gray-600">{{ team }}</p>
+                {% set tenant_slug = request.session.get("tenant_slug") %}
+                {% if tenant_slug %}<p class="text-xs text-gray-500 uppercase mt-1">{{ tenant_slug }}</p>{% endif %}
+              </div>
+              <form method="get" action="/logout">
+                <button type="submit" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                  {{ "Logout" | t }}
+                </button>
+              </form>
+            </div>
+          </div>
+
 
           <button id="toolboxToggle">
             ⚙️
@@ -271,19 +284,31 @@
 
       <!-- NAVIGATION (Mobile dropdown) -->
       <div x-show="open" x-transition class="md:hidden border-t bg-white">
-        <div class="px-4 py-3 space-y-3">
-          <!-- User Info -->
-          <div class="flex items-center justify-between bg-gray-50 px-3 py-2 rounded">
-            <span>{% if request.session.get("tenant_slug") %}<span class="text-xs text-gray-400 font-medium uppercase">{{ request.session.get("tenant_slug") }}</span> {% endif %}{{ user }} {{ caller }}</span>
-            <form method="get" action="/logout">
-              <button type="submit" class="text-sm text-gray-600 hover:text-red-600">
-                {{ "Logout" | t }}
-              </button>
-            </form>
-          </div>
-
-          <!-- Reuse same buttons -->
+        <div class="px-4 py-3 space-y-3 flex flex-col">
+          <!-- Navigation buttons at top -->
           <div x-html="$refs.navButtons.innerHTML" @click="open = false" class="flex flex-col gap-2"></div>
+
+          <!-- User Menu at bottom -->
+          <div class="mt-4 pt-4 border-t">
+            <div class="bg-gray-50 px-3 py-3 rounded">
+              <div class="flex items-center gap-3 mb-3">
+                <div style="width: 40px; height: 40px;" class="rounded-full bg-blue-500 text-white font-semibold flex items-center justify-center text-sm">
+                  {{ (user[0] | upper) if user else 'U' }}
+                </div>
+                <div class="text-left flex-1">
+                  <p class="text-sm font-semibold text-gray-900">{{ user }}</p>
+                  <p class="text-xs text-gray-600">{{ team }}</p>
+                  {% set tenant_slug = request.session.get("tenant_slug") %}
+                  {% if tenant_slug %}<p class="text-xs text-gray-500 uppercase">{{ tenant_slug }}</p>{% endif %}
+                </div>
+              </div>
+              <form method="get" action="/logout">
+                <button type="submit" class="w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-200 rounded transition text-sm">
+                  {{ "Logout" | t }}
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </header>

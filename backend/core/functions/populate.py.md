@@ -17,10 +17,10 @@ record = populate(data_dict, record, CustomerUpdate)
 **Important:** pop FK/relationship fields from `data_dict` BEFORE calling populate. Handle them separately after.
 
 ```python
-caller_id = data_dict.pop("caller_id", None)
+team_id = data_dict.pop("team_id", None)
 record = populate(data_dict, record, EntityUpdate)
-if caller_id:
-    record.caller = db.get(Caller, int(caller_id))
+if team_id:
+    record.team = db.get(Team, int(team_id))
 ```
 
 ## extra.* convention

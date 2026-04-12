@@ -28,7 +28,7 @@ LANG = {
         "x_product": "Product",
         "y_calls": "Number of Calls",
         "y_customers": "Number of Customers",
-        "total_all": "Total (All Callers)",
+        "total_all": "Total (All Teams)",
         "statuses": {
             "answered": "Answered",
             "no_answer": "No Answer",
@@ -70,7 +70,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Generate Call Center Statistics (HTML/Plotly)")
     parser.add_argument("--from", dest="date_from", required=False, help="Start date (YYYY-MM-DD)")
     parser.add_argument("--to", dest="date_to", required=False, help="End date (YYYY-MM-DD)")
-    parser.add_argument("--team", help="Filter by caller name")
+    parser.add_argument("--team", help="Filter by team name")
     parser.add_argument("--product-type", choices=["type_a", "type_b", "type_c", "type_d", "type_e", "type_f", "type_g"], help="Filter products by type")
     parser.add_argument("--chart", choices=[
         "calls_over_time",
@@ -118,9 +118,9 @@ def calls_over_time(session: Session, date_from, date_to, caller_name, lang):
         print(lang["no_call_data"])
         return None
 
-    caller_map = {}
+    team_map = {}
     for row in data:
-        caller_map.setdefault(row.caller_name, []).append((row.day, row.count))
+        team_map.setdefault(row.caller_name, []).append((row.day, row.count))
 
     total_map = {}
     for row in data:
@@ -130,11 +130,11 @@ def calls_over_time(session: Session, date_from, date_to, caller_name, lang):
 
     fig = go.Figure()
 
-    for cname, entries in caller_map.items():
+    for team_name, entries in team_map.items():
         entries.sort(key=lambda x: x[0])
         days = [e[0] for e in entries]
         counts = [e[1] for e in entries]
-        fig.add_trace(go.Scatter(x=days, y=counts, mode="lines+markers", name=cname, line=dict(width=2)))
+        fig.add_trace(go.Scatter(x=days, y=counts, mode="lines+markers", name=team_name, line=dict(width=2)))
 
     if not caller_name or caller_name.lower() == "all":
         fig.add_trace(
@@ -236,7 +236,7 @@ def product_participation(session: Session, date_from, date_to, product_type, ca
         print(lang["no_product_data"])
         return None
 
-    callers = sorted({row.caller_name for row in data})
+    teams = sorted({row.caller_name for row in data})
     products = sorted({row.product_name for row in data})
     categories = ["not_interested", "interested", "comming"]
     colors = {
@@ -245,29 +245,29 @@ def product_participation(session: Session, date_from, date_to, product_type, ca
         "comming": "#de7e5b"
     }
 
-    stats = {c: {e: {cat: 0 for cat in categories} for e in products} for c in callers}
+    stats = {c: {e: {cat: 0 for cat in categories} for e in products} for c in teams}
     for row in data:
         for cat in categories:
             stats[row.caller_name][row.product_name][cat] = getattr(row, cat) or 0
 
     total = {e: {cat: 0 for cat in categories} for e in products}
     for e in products:
-        for c in callers:
+        for c in teams:
             for cat in categories:
                 total[e][cat] += stats[c][e][cat]
 
     fig = go.Figure()
 
-    for idx, caller in enumerate(callers):
+    for idx, team in enumerate(teams):
         for cat in categories:
             hover_text = [
-                f"{lang['x_product']}: {e}<br>{lang['x_caller']}: {caller}<br>{lang['statuses'][cat]}: {stats[caller][e][cat]}"
+                f"{lang['x_product']}: {e}<br>{lang['x_caller']}: {team}<br>{lang['statuses'][cat]}: {stats[team][e][cat]}"
                 for e in products
             ]
             fig.add_bar(
                 name=lang["statuses"][cat],   # ✅ visar rätt namn i legend / footer
                 x=products,
-                y=[stats[caller][e][cat] for e in products],
+                y=[stats[team][e][cat] for e in products],
                 marker_color=colors[cat],
                 offsetgroup=idx,
                 legendgroup=cat,
@@ -338,11 +338,11 @@ def main():
     session = get_session()
     try:
         if args.chart == "calls_over_time":
-            fig = calls_over_time(session, date_from, date_to, args.caller, lang)
+            fig = calls_over_time(session, date_from, date_to, args.team, lang)
         elif args.chart == "team_performance":
             fig = team_performance(session, date_from, date_to, lang)
         elif args.chart == "product_participation":
-            fig = product_participation(session, date_from, date_to, args.product_type, args.caller, lang)
+            fig = product_participation(session, date_from, date_to, args.product_type, args.team, lang)
         else:
             print(f"Chart '{args.chart}' not implemented.")
             return

@@ -49,16 +49,16 @@ def create_tenant(slug: str, name: str, db_dir: str = "/dbdata"):
     os.makedirs(db_dir, exist_ok=True)
 
     # Import all models so SQLAlchemy can resolve relationship strings (e.g. "Team")
-    import models.account  # noqa: F401
-    import models.alarm  # noqa: F401
-    import models.caller  # noqa: F401
-    import models.call  # noqa: F401
-    import models.company  # noqa: F401
-    import models.customer  # noqa: F401
-    import models.invoice  # noqa: F401
-    import models.product  # noqa: F401
-    import models.product_customer  # noqa: F401
-    import models.tag  # noqa: F401
+    import models.account  
+    import models.alarm  
+    import models.team  
+    import models.call  
+    import models.company  
+    import models.customer  
+    import models.invoice  
+    import models.product  
+    import models.product_customer 
+    import models.tag  
     from models.user import User
     from core.models.base import Base
 

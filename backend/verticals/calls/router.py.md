@@ -23,7 +23,7 @@ WS  /calls/ws?token=<jwt>  → validated, stored in state.active_connections[use
 
 | Method | Path | Returns |
 |--------|------|---------|
-| GET/POST | `/calls/dashboard` | call center shell |
+| GET/POST | `/calls/dashboard` | call center shell — requires `user.team_id` (400 otherwise) |
 | GET | `/calls/customers` | customer list fragment |
 | GET | `/calls/<id>/calls` | call history for customer |
 | GET | `/calls/products` | product list fragment |

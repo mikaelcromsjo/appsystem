@@ -22,6 +22,31 @@
   <div class="mb-3 px-3 py-2 bg-green-50 border border-green-200 rounded text-green-700 text-sm">{{ "User created." | t }}</div>
   {% endif %}
 
+  <!-- Teams section -->
+  <div class="mb-6 p-4 border rounded bg-gray-50">
+    <h3 class="font-bold mb-3">{{ "Teams" | t }}</h3>
+    <div class="flex gap-2 flex-wrap">
+      {% for team in teams %}
+      <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm">{{ team.name }}</span>
+      {% endfor %}
+    </div>
+    <form
+      hx-post="{{ url_for('admin_create_team') }}"
+      hx-target="#admin_content"
+      hx-swap="innerHTML"
+      class="mt-3 flex gap-3 items-end">
+      <div>
+        <label class="block text-xs font-medium mb-1">{{ "New Team Name" | t }}</label>
+        <input type="text" name="name" required placeholder="e.g., Sales"
+          class="border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+      </div>
+      <button type="submit"
+        class="px-4 py-1.5 bg-green-500 text-white rounded hover:bg-green-600 text-sm">
+        {{ "Create Team" | t }}
+      </button>
+    </form>
+  </div>
+
   <!-- Create form -->
   <div x-show="showCreate" x-transition class="mb-4 p-4 border rounded bg-gray-50">
     <form
@@ -62,19 +87,40 @@
       <thead>
         <tr>
           <th class="w-[5%] px-2 py-1 border">ID</th>
-          <th class="w-[40%] px-2 py-1 border">{{ "Email" | t }}</th>
+          <th class="w-[30%] px-2 py-1 border">{{ "Email" | t }}</th>
           <th class="w-[25%] px-2 py-1 border">{{ "Team" | t }}</th>
           <th class="w-[15%] px-2 py-1 border text-center">{{ "Admin" | t }}</th>
+          <th class="w-[10%] px-2 py-1 border text-center">{{ "Actions" | t }}</th>
         </tr>
       </thead>
       <tbody>
         {% for u in users %}
-        <tr class="hover:bg-gray-50">
+        <tr class="hover:bg-gray-50" x-data="{ editTeam: false }">
           <td class="px-2 py-1 border text-sm">{{ u.id }}</td>
           <td class="px-2 py-1 border text-sm">{{ u.username }}</td>
-          <td class="px-2 py-1 border text-sm">{{ u.team.name if u.team else '—' }}</td>
+          <td class="px-2 py-1 border text-sm">
+            <div x-show="!editTeam">{{ u.team.name if u.team else '—' }}</div>
+            <form x-show="editTeam" @submit.prevent
+              hx-post="{{ url_for('admin_update_user_team', user_id=u.id) }}"
+              hx-target="#admin_content"
+              hx-swap="innerHTML"
+              class="flex gap-2">
+              <select name="team_id" required
+                class="border rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <option value="">— None —</option>
+                {% for team in teams %}
+                <option value="{{ team.id }}" {% if u.team_id == team.id %}selected{% endif %}>{{ team.name }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="text-green-600 hover:text-green-700 font-bold">✔</button>
+              <button type="button" @click="editTeam = false" class="text-red-600 hover:text-red-700">✕</button>
+            </form>
+          </td>
           <td class="px-2 py-1 border text-center text-sm">
             {% if u.admin %}<span class="text-green-600 font-bold">✔</span>{% else %}<span class="text-gray-400">–</span>{% endif %}
+          </td>
+          <td class="px-2 py-1 border text-center text-sm">
+            <button @click="editTeam = true" class="text-blue-600 hover:text-blue-700 text-xs px-2 py-1">{{ "Edit" | t }}</button>
           </td>
         </tr>
         {% endfor %}

@@ -1,4 +1,5 @@
 # products.py
+import json
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi import APIRouter, Depends, Form, Request, HTTPException, Query
 
@@ -56,8 +57,23 @@ def products_list(
     return templates.TemplateResponse(
         "products/list.html", {
             "request": request, "products": products, "is_admin": user.admin, "products_map": cms.products_map, "columns": COLUMNS
-}
+        }
     )
+
+
+@router.get("/rows", response_class=HTMLResponse, name="products_rows")
+def products_rows(
+    request: Request,
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user),
+    cms: CmsConfig = Depends(get_cms_config),
+):
+    products = db.query(Product).all()
+    return templates.TemplateResponse(
+        "products/rows.html",
+        {"request": request, "products": products, "products_map": cms.products_map},
+    )
+
 
 # -----------------------------
 # Product Detail Modal (HTMX fragment)
@@ -211,19 +227,9 @@ async def upsert_product(
     db.commit()
     db.refresh(product)
 
-    # Render updated list (HTMX swap)
-    products = db.query(Product).all()
-    response = templates.TemplateResponse(
-        "products/list.html",
-        {
-            "request": request, 
-            "products": products,
-            "products_map": cms.products_map,
-         },
-    )
-    # Set the popup message in a custom header
+    response = HTMLResponse("")
     response.headers["HX-Popup-Message"] = "Saved"
-    response.headers["HX-Trigger"] = "callsProductsReload"
+    response.headers["HX-Trigger"] = json.dumps({"callsProductsReload": True, "productsRowsReload": True})
     return response
 
 # DELETE product
@@ -271,9 +277,7 @@ async def set_filter(
 
     products = db.execute(query).scalars().all()
 
-    response = templates.TemplateResponse(
-        "products/list.html",
-        {"request": request, "products": products, "products_map": cms.products_map}
-    )
+    response = HTMLResponse("")
     response.headers["HX-Popup-Message"] = "Updated"
+    response.headers["HX-Trigger"] = "productsRowsReload"
     return response

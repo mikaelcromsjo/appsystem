@@ -87,8 +87,9 @@
         </template>
 
         <label class="inline-flex items-center space-x-1 form-check form-check-inline">
-          <input id="fix" type="checkbox" x-model="checked" @change="localStorage.setItem('fix', this.checked);"
-            x-data="{ checked: JSON.parse(localStorage.getItem('fix')) || false }"
+          <input id="fix" type="checkbox"
+            x-init="$el.checked = localStorage.getItem('fix') === 'true'"
+            @change="localStorage.setItem('fix', $el.checked)"
             class="form-check-input auto-save customer-disable">
           <span>{{ "Fix" | t }}</span>
         </label>

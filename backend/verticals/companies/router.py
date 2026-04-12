@@ -35,10 +35,26 @@ def companies_list(
     from verticals.companies import COLUMNS
     return render(
         "companies/list.html",
-        {"request": request, 
+        {"request": request,
          "companies": companies,
          "columns": COLUMNS,
          },
+    )
+
+
+@router.get("/rows", response_class=HTMLResponse, name="companies_rows")
+def companies_rows(
+    request: Request,
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user),
+):
+    query = db.query(Company)
+    if not user.admin:
+        query = query.filter(Company.team_id == user.team_id)
+    companies = query.all()
+    return templates.TemplateResponse(
+        "companies/rows.html",
+        {"request": request, "companies": companies},
     )
 
 
@@ -137,15 +153,9 @@ async def upsert_company(
 
 
 
-    response =  templates.TemplateResponse(
-        "companies/list.html",
-        {
-            "request": request, 
-            "companies": companies,
-            "detail": "Updated"},
-    )
-    # Set the popup message in a custom header
+    response = HTMLResponse("")
     response.headers["HX-Popup-Message"] = "Saved"
+    response.headers["HX-Trigger"] = "companiesRowsReload"
     return response
 
 

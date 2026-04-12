@@ -75,9 +75,9 @@
     <span class="flex-1">{{ customer.first_name }} {{ customer.last_name }}</span>
 
     <!-- Edit icon on the right -->
-    <span 
+    <span
         class="ml-2 flex items-center w-5 h-5 cursor-pointer"
-        hx-get="{{ url_for('customer_detail', customer_id=customer.id) }}"
+        hx-get="{{ url_for('customer_detail', customer_id=customer.id) }}?modal_store=calls"
         hx-target="#modal-container-calls"
         hx-swap="innerHTML"
         @click.stop="$store.modal_calls.open = true"

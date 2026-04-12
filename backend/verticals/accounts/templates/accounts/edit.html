@@ -3,8 +3,7 @@
 
 <form
     hx-post="{{ url_for('upsert_account') }}"
-    hx-target="#accounts-list"
-    hx-swap="innerHTML"
+    hx-swap="none"
     hx-ext="json-enc"
     hx-headers='{"Content-Type": "application/json"}'
     x-init="

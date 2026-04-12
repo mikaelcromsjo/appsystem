@@ -55,6 +55,24 @@ def alarms_list(
     )
 
 
+@router.get("/rows", response_class=HTMLResponse, name="alarms_rows")
+def alarms_rows(
+    request: Request,
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user),
+):
+    today = datetime.now(timezone.utc)
+    alarms = (
+        db.query(Alarm)
+        .filter((Alarm.team_id == user.team_id) & (Alarm.date >= today))
+        .all()
+    )
+    return templates.TemplateResponse(
+        "alarms/rows.html",
+        {"request": request, "alarms": alarms},
+    )
+
+
 
 # -----------------------------
 # Alarm Detail Modal (HTMX fragment)
@@ -180,7 +198,6 @@ async def set_filter(
         query = query.where(Alarm.date <= alarm_date_filter_end)
 
     alarms = db.execute(query).scalars().all()
-    return templates.TemplateResponse(
-        "alarms/list.html",
-        {"request": request, "alarms": alarms}
-    )
+    response = HTMLResponse("")
+    response.headers["HX-Trigger"] = "alarmsRowsReload"
+    return response

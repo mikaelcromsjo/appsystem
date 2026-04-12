@@ -142,6 +142,36 @@ Session keys set by auth:
 `get_db(request)` raises HTTP 401 if `tenant_db_url` is absent.  
 Use `get_master_db()` for routes that touch GlobalUser / Tenant / LoginToken.
 
+## 10. Rows/reload pattern
+
+Lists are split into two endpoints: a shell (`list.html`) and rows-only fragment (`rows.html`).  
+Filters and upserts fire `HX-Trigger` events; the rows div listens and reloads itself.
+
+```python
+# Shell endpoint — renders full list page once
+@router.get("/", name="customers_list")
+def customers_list(...):
+    return templates.TemplateResponse("customers/list.html", {...})
+
+# Rows endpoint — reloaded on events
+@router.get("/rows", name="customers_rows")
+def customers_rows(...):
+    customers = get_user_customers(db, request, user)
+    return templates.TemplateResponse("customers/rows.html", {"request": request, "customers": customers})
+
+# Filter/upsert — fire event instead of re-rendering
+response = HTMLResponse("")
+response.headers["HX-Trigger"] = "customersRowsReload"
+return response
+```
+
+In `list.html`, the rows div listens:
+```html
+<div hx-get="/customers/rows" hx-trigger="load, customersRowsReload from:body" hx-target="this">
+```
+
+Event naming convention: `<slug>RowsReload` (e.g. `alarmsRowsReload`, `invoicesRowsReload`).
+
 ## 9. Adding a new entity (checklist)
 
 - [ ] `models/<entity>.py` — ORM + Pydantic schema; `Base` from `core.models.base`, `BaseMixin` from `models.base`

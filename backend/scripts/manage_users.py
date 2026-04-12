@@ -94,27 +94,27 @@ def manage_user(tenant_slug: str, email: str, password: str | None, admin: int, 
         master_db.commit()
 
         # --- Local User (tenant DB) ---
-        caller = None
+        team = None
         if team_name:
-            caller = tenant_db.query(Team).filter_by(name=team_name).first()
-            if not caller:
-                caller = Team(name=team_name)
-                tenant_db.add(caller)
+            team = tenant_db.query(Team).filter_by(name=team_name).first()
+            if not team:
+                team = Team(name=team_name)
+                tenant_db.add(team)
                 tenant_db.flush()
                 print(f"  Created team '{team_name}'")
 
         local_user = tenant_db.query(User).filter_by(global_user_id=global_user.id).first()
         if local_user:
             local_user.admin = admin
-            if caller is not None:
-                local_user.team = caller
+            if team is not None:
+                local_user.team = team
             print(f"  Updated local user in '{tenant_slug}' (admin={admin})")
         else:
             local_user = User(
                 username=email,
                 admin=admin,
                 global_user_id=global_user.id,
-                team=caller,
+                team=team,
             )
             tenant_db.add(local_user)
             print(f"  Created local user in '{tenant_slug}' (admin={admin})")
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     parser.add_argument("--email", required=True, help="Email address (globally unique login identity)")
     parser.add_argument("--password", default=None, help="Password (prompted if omitted for new users)")
     parser.add_argument("--admin", type=int, default=0, help="Admin flag: 0=normal, 1=admin")
-    parser.add_argument("--team", default=None, help="Team/caller name (optional)")
+    parser.add_argument("--team", default=None, help="Team name (optional)")
 
     args = parser.parse_args()
     manage_user(args.tenant, args.email, args.password, args.admin, args.team)
