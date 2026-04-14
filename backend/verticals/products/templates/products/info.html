@@ -25,26 +25,38 @@
 
 <div class="mb-1"><strong>{{ "Product Types" | t }}:</strong>
     {% set types = [] %}
-    {% if product.type_a %}{% set _ = types.append(filters_map["filter_a"]) %}{% endif %}
-    {% if product.type_b_ %}{% set _ = types.append(filters_map["filter_b"]) %}{% endif %}
-    {% if product.type_c %}{% set _ = types.append(filters_map["filter_c"]) %}{% endif %}
-    {% if product.type_d %}{% set _ = types.append(filters_map["filter_d"]) %}{% endif %}
-    {% if product.type_e %}{% set _ = types.append(filters_map["filter_e"]) %}{% endif %}
-    {% if product.type_f %}{% set _ = types.append(filters_map["filter_f"]) %}{% endif %}
-    {% if product.type_g %}{% set _ = types.append(filters_map["filter_g"]) %}{% endif %}
-
+    {% if product.is_filter_1 %}{% set _ = types.append(filters_map["is_filter_1"]) %}{% endif %}
+    {% if product.is_filter_2 %}{% set _ = types.append(filters_map["is_filter_2"]) %}{% endif %}
+    {% if product.is_filter_3 %}{% set _ = types.append(filters_map["is_filter_3"]) %}{% endif %}
+    {% if product.is_filter_4 %}{% set _ = types.append(filters_map["is_filter_4"]) %}{% endif %}
+    {% if product.is_filter_5 %}{% set _ = types.append(filters_map["is_filter_5"]) %}{% endif %}
+    {% if product.is_filter_6 %}{% set _ = types.append(filters_map["is_filter_6"]) %}{% endif %}
+    {% if product.is_filter_7 %}{% set _ = types.append(filters_map["is_filter_7"]) %}{% endif %}
 
     {{ types | join(', ') if types else '' }}
 </div>
 
-    {% set extras = [] %}
-    {% if product.extra_external %}{% set _ = extras.append('Extern') %}{% endif %}
-    {% if product.extra_non_political %}{% set _ = extras.append('Opolitisk') %}{% endif %}
-    {% if product.extra_visilble_all %}{% set _ = extras.append('Synlig för alla') %}{% endif %}
+{% if product.extra_visilble_all %}
+<div class="mb-1"><strong>{{ "Visible to All" | t }}</strong></div>
+{% endif %}
 
-{% if extras %}
-<div class="mb-1"><strong>{{ "Extra" | t }}:</strong>
-    {{ extras | join(', ') if extras else '' }}
+{% if product_extras and product.extra %}
+{% set extra_labels = [] %}
+{% for key, meta in product_extras.items() %}
+  {% set val = product.extra.get(key) %}
+  {% if val %}
+    {% if meta.type == "bool" %}
+      {% set _ = extra_labels.append(meta.label) %}
+    {% elif meta.type == "password" %}
+      {% set _ = extra_labels.append(meta.label ~ ': ***') %}
+    {% else %}
+      {% set _ = extra_labels.append(meta.label ~ ': ' ~ val) %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+{% if extra_labels %}
+<div class="mb-1"><strong>{{ "Extra" | t }}:</strong> {{ extra_labels | join(', ') }}</div>
+{% endif %}
 {% endif %}
 
 {% if totals.all > 0 %}

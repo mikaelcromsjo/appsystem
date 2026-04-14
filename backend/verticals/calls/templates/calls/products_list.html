@@ -34,14 +34,14 @@
         {% for product in products %}
         <div tabindex="0"
              x-show="(
-                {{ 'true' if product.extra_visilble_all else 'false' }} || 
-                ( (Alpine.store('productFilters').filter_a && {{ 'true' if product.type_a else 'false' }}) ||
-                  (Alpine.store('productFilters').filter_b && {{ 'true' if product.type_b else 'false' }}) ||
-                  (Alpine.store('productFilters').filter_c && {{ 'true' if product.type_c else 'false' }}) ||
-                  (Alpine.store('productFilters').filter_d && {{ 'true' if product.type_d else 'false' }}) ||
-                  (Alpine.store('productFilters').filter_e && {{ 'true' if product.type_e else 'false' }}) ||
-                  (Alpine.store('productFilters').filter_f && {{ 'true' if product.type_f else 'false' }}) ||
-                  (Alpine.store('productFilters').filter_g && {{ 'true' if product.type_g else 'false' }})
+                {{ 'true' if product.extra_visilble_all else 'false' }} ||
+                ( (Alpine.store('productFilters').is_filter_1 && {{ 'true' if product.is_filter_1 else 'false' }}) ||
+                  (Alpine.store('productFilters').is_filter_2 && {{ 'true' if product.is_filter_2 else 'false' }}) ||
+                  (Alpine.store('productFilters').is_filter_3 && {{ 'true' if product.is_filter_3 else 'false' }}) ||
+                  (Alpine.store('productFilters').is_filter_4 && {{ 'true' if product.is_filter_4 else 'false' }}) ||
+                  (Alpine.store('productFilters').is_filter_5 && {{ 'true' if product.is_filter_5 else 'false' }}) ||
+                  (Alpine.store('productFilters').is_filter_6 && {{ 'true' if product.is_filter_6 else 'false' }}) ||
+                  (Alpine.store('productFilters').is_filter_7 && {{ 'true' if product.is_filter_7 else 'false' }})
                 )
              ) && ('{{ product.name.lower() }}'.includes(search.toLowerCase()))"
              class="p-2 cursor-pointer border-b"

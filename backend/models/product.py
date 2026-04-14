@@ -20,17 +20,15 @@ class Product(BaseMixin, Base):
     start_date = Column(DateTime, nullable=True)
     end_date = Column(DateTime, nullable=True)
 
-    type_a = Column(Boolean, default=False)
-    type_b = Column(Boolean, default=False)
-    type_c = Column(Boolean, default=False)
-    type_d = Column(Boolean, default=False)
-    type_e = Column(Boolean, default=False)
-    type_f = Column(Boolean, default=False)
-    type_g = Column(Boolean, default=False)
-    type_h = Column(Boolean, default=False)
+    is_filter_1 = Column(Boolean, default=False)
+    is_filter_2 = Column(Boolean, default=False)
+    is_filter_3 = Column(Boolean, default=False)
+    is_filter_4 = Column(Boolean, default=False)
+    is_filter_5 = Column(Boolean, default=False)
+    is_filter_6 = Column(Boolean, default=False)
+    is_filter_7 = Column(Boolean, default=False)
+    is_filter_8 = Column(Boolean, default=False)
 
-    extra_external = Column(Boolean, default=False)
-    extra_non_political = Column(Boolean, default=False)
     extra_visilble_all = Column(Boolean, default=False)
 
     extra = Column(MutableDict.as_mutable(JSON), default=dict)
@@ -44,17 +42,15 @@ class ProductUpdate(BaseModel):
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
 
-    type_a: bool = False
-    type_b: bool = False
-    type_c: bool = False
-    type_d: bool = False
-    type_e: bool = False
-    type_f: bool = False
-    type_g: bool = False
-    type_h: bool = False
+    is_filter_1: bool = False
+    is_filter_2: bool = False
+    is_filter_3: bool = False
+    is_filter_4: bool = False
+    is_filter_5: bool = False
+    is_filter_6: bool = False
+    is_filter_7: bool = False
+    is_filter_8: bool = False
 
-    extra_external: bool = False
-    extra_non_political: bool = False
     extra_visilble_all: bool = False
     extra: Optional[Dict[str, Any]] = None
 

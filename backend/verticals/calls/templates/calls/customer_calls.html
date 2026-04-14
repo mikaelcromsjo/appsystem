@@ -3,13 +3,13 @@
 
   <div x-data x-init='
         if (!document.getElementById("fix").checked) {
-          Alpine.store("productFilters").filter_a = {{ customer.filter_a | tojson }};
-          Alpine.store("productFilters").filter_b  = {{ customer.filter_b | tojson }};
-          Alpine.store("productFilters").filter_c  = {{ customer.filter_c | tojson }};
-          Alpine.store("productFilters").filter_d = {{ customer.filter_d | tojson }};
-          Alpine.store("productFilters").filter_e = {{ customer.filter_e | tojson }};
-          Alpine.store("productFilters").filter_f = {{ customer.filter_f | tojson }};
-          Alpine.store("productFilters").filter_g = {{ customer.filter_g | tojson }};
+          Alpine.store("productFilters").is_filter_1 = {{ customer.is_filter_1 | tojson }};
+          Alpine.store("productFilters").is_filter_2  = {{ customer.is_filter_2 | tojson }};
+          Alpine.store("productFilters").is_filter_3  = {{ customer.is_filter_3 | tojson }};
+          Alpine.store("productFilters").is_filter_4 = {{ customer.is_filter_4 | tojson }};
+          Alpine.store("productFilters").is_filter_5 = {{ customer.is_filter_5 | tojson }};
+          Alpine.store("productFilters").is_filter_6 = {{ customer.is_filter_6 | tojson }};
+          Alpine.store("productFilters").is_filter_7 = {{ customer.is_filter_7 | tojson }};
         }
         Alpine.store("customer").comment = {{ customer.comment | tojson | safe }};
         '>
