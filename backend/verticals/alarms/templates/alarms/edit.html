@@ -57,22 +57,15 @@
     <!-- Alarm Types -->
     <fieldset class="mb-2 border p-2">
         <legend class="font-bold">{{ "Alarm Types" | t }}</legend>
-        <label><input type="checkbox" name="type_a" {% if alarm.type_a %}checked{% endif %}/> {{filters_map['filter_a']}}</label><br/>
-        <label><input type="checkbox" name="type_b" {% if alarm.type_b %}checked{% endif %}/> {{filters_map['filter_b']}} </label><br/>
-        <label><input type="checkbox" name="type_c" {% if alarm.type_c %}checked{% endif %}/> {{filters_map['filter_c']}}</label><br/>
-        <label><input type="checkbox" name="type_d" {% if alarm.type_d %}checked{% endif %}/> {{filters_map['filter_d']}}</label>
-        <label><input type="checkbox" name="type_e" {% if alarm.type_e %}checked{% endif %}/> {{filters_map['filter_e']}}</label>
-        <label><input type="checkbox" name="type_f" {% if alarm.type_f %}checked{% endif %}/> {{filters_map['filter_f']}}</label>
-        <label><input type="checkbox" name="type_g" {% if alarm.type_g %}checked{% endif %}/> {{filters_map['filter_g']}}</label>
+        <label><input type="checkbox" name="type_a" {% if alarm.type_a %}checked{% endif %}/> {{filters_map['is_filter_1']}}</label><br/>
+        <label><input type="checkbox" name="type_b" {% if alarm.type_b %}checked{% endif %}/> {{filters_map['is_filter_2']}} </label><br/>
+        <label><input type="checkbox" name="type_c" {% if alarm.type_c %}checked{% endif %}/> {{filters_map['is_filter_3']}}</label><br/>
+        <label><input type="checkbox" name="type_d" {% if alarm.type_d %}checked{% endif %}/> {{filters_map['is_filter_4']}}</label>
+        <label><input type="checkbox" name="type_e" {% if alarm.type_e %}checked{% endif %}/> {{filters_map['is_filter_5']}}</label>
+        <label><input type="checkbox" name="type_f" {% if alarm.type_f %}checked{% endif %}/> {{filters_map['is_filter_6']}}</label>
+        <label><input type="checkbox" name="type_g" {% if alarm.type_g %}checked{% endif %}/> {{filters_map['is_filter_7']}}</label>
     </fieldset>
 
-    <!-- Extra Options -->
-    <fieldset class="mb-2 border p-2">
-        <legend class="font-bold">{{ "Extra Options" | t }}</legend>
-        <label><input type="checkbox" name="extra_external" {% if alarm.extra_external %}checked{% endif %}/> {{ "External" | t }}</label><br/>
-        <label><input type="checkbox" name="extra_non_political" {% if alarm.extra_non_political %}checked{% endif %}/> {{ "Non-Political" | t }}</label><br/>
-        <label><input type="checkbox" name="extra_visilble_all" {% if alarm.extra_visilble_all %}checked{% endif %}/> {{ "Visible to All" | t }}</label>
-    </fieldset>
 
 
     <!-- Submit 
