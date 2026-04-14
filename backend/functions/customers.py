@@ -68,12 +68,37 @@ def assign_customers_team(db: Session, ids: List[int], team_id: int):
     db.commit()
     return updated_rows
 
+def assign_customer_user(db: Session, ids: List[int], user_id: int):
+    """
+    Assign multiple customers to a given user.
+    Ensures user exists and updates customers safely.
+    """
+    from models.models import User
+
+    if not ids:
+        return 0
+
+    # Validate that user exists
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise ValueError(f"User with id {user_id} does not exist.")
+
+    # Perform bulk update safely
+    updated_rows = (
+        db.query(Customer)
+        .filter(Customer.id.in_(ids))
+        .update({Customer.assigned_user_id: user_id}, synchronize_session="fetch")
+    )
+
+    db.commit()
+    return updated_rows
+
 def get_user_customers(db, request, user, json_fields: dict = None):
  #   calculate_last_call(db)
     query = db.query(Customer)
 
     if user.admin != 1:
-        query = query.filter(Customer.team_id == user.team_id)
+        query = query.filter(Customer.assigned_user_id == user.id)
 
     filter_dict = request.session.get("customer_filters", {})
     filters = build_filters(filter_dict, Customer, json_fields=json_fields)

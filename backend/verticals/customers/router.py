@@ -63,9 +63,12 @@ def customers_list(
     request: Request,
     db: Session = Depends(get_db),
     user = Depends(get_current_user),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
-    customers = get_user_customers(db, request, user)
+    from models.models import User
+    customers = get_user_customers(db, request, user, json_fields=cms.customer_extras)
     teams = db.query(Team).all()
+    users = db.query(User).all()
 
     from verticals.customers import COLUMNS
     return templates.TemplateResponse(
@@ -74,6 +77,7 @@ def customers_list(
          "customers": customers,
          "is_admin": user.admin,
          "teams": teams,
+         "users": users,
          "columns": COLUMNS,
         }
     )
@@ -84,11 +88,14 @@ def customers_rows(
     request: Request,
     db: Session = Depends(get_db),
     user = Depends(get_current_user),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
-    customers = get_user_customers(db, request, user)
+    from models.models import User
+    customers = get_user_customers(db, request, user, json_fields=cms.customer_extras)
+    users = db.query(User).all()
     return templates.TemplateResponse(
         "customers/rows.html",
-        {"request": request, "customers": customers},
+        {"request": request, "customers": customers, "users": users},
     )
 
 @router.post("/data", name="customers_data")
@@ -120,6 +127,10 @@ class AssignRequest(BaseModel):
     team_id: int
     selected_ids: SelectedIDs
 
+class AssignUserRequest(BaseModel):
+    user_id: int
+    selected_ids: SelectedIDs
+
 @router.post("/assign", response_class=HTMLResponse)
 def assign_team(
     request: Request,
@@ -146,6 +157,35 @@ def assign_team(
     response = HTMLResponse("")  # empty body; HTMX will handle via headers
     response.headers["HX-Popup-Message"] = f"Assigned {updated_count} customers"
     response.headers["HX-Trigger"] = "customersReload"
+    return response
+
+@router.post("/assign_user", response_class=HTMLResponse)
+def assign_user(
+    request: Request,
+    data: AssignUserRequest,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    from functions.customers import assign_customer_user
+    user_id = data.user_id
+    selected_ids = data.selected_ids
+
+    # Extract list of IDs from form or session helper
+    ids = get_selected_ids(request, selected_ids)
+    user_id = int(user_id)
+
+    if not ids:
+        response = HTMLResponse("No customers selected", status_code=400)
+        response.headers["HX-Popup-Message"] = "No customers selected"
+        return response
+
+    # Perform the safe DB update
+    updated_count = assign_customer_user(db, ids, user_id)
+
+    # Return an empty response with HTMX headers
+    response = HTMLResponse("")
+    response.headers["HX-Popup-Message"] = f"Assigned {updated_count} customers"
+    response.headers["HX-Trigger"] = "customersRowsReload"
     return response    
 
 
@@ -188,11 +228,15 @@ async def upsert_customer(
             field_name = key.split(".", 1)[1]  # remove "extra."
             data_dict['extra'][field_name] = value
             del data_dict[key]  # optionally clean up the flat key
-            
+
     # --- Temporarily remove relationships before populate ---
     team_id = (data_dict.pop("team_id", None))  # remove 'team' from dict
     if team_id:
         team_id = int(team_id)
+
+    assigned_user_id = (data_dict.pop("assigned_user_id", None))
+    if assigned_user_id:
+        assigned_user_id = int(assigned_user_id)
 
     # Populate DB model dynamically (everything except relationships)
     data_record = populate(data_dict, data_record, CustomerUpdate)
@@ -202,6 +246,13 @@ async def upsert_customer(
         if not team_instance:
             raise HTTPException(status_code=404, detail="Team not found")
         data_record.team = team_instance  # assign the actual SQLAlchemy object
+
+    if isinstance(assigned_user_id, int):
+        from models.models import User
+        user_instance = db.get(User, int(assigned_user_id))
+        if not user_instance:
+            raise HTTPException(status_code=404, detail="User not found")
+        data_record.assigned_user = user_instance
 
 
     if data_record.location:
@@ -217,7 +268,7 @@ async def upsert_customer(
         if duplicate_email:
             errors.append({
                 "loc": ["body", "email"],
-                "msg": "Epost finns redan i systemet",
+                "msg": "Email already in system",
                 "type": "value_error.conflict"
             })
     
@@ -227,7 +278,7 @@ async def upsert_customer(
         if duplicate_phone:
             errors.append({
                 "loc": ["body", "phone"],
-                "msg": "Telefonnummret finns redan i systemet",
+                "msg": "Phone numer already in system",
                 "type": "value_error.conflict"
             })
     
@@ -240,7 +291,7 @@ async def upsert_customer(
     if duplicate_name:
         errors.append({
             "loc": ["body", "first_name", "last_name"],
-            "msg": "Kund med samma för och efternamn finns redann i systemet",
+            "msg": "Customer name already in system",
             "type": "value_error.conflict"
         })
 
@@ -284,7 +335,9 @@ def customer_detail(
         customer = Customer.empty()
         customer.team_id = user.team_id
 
+    from models.models import User
     teams = db.query(Team).all()
+    users = db.query(User).all()
 
     customer.team_id = int(customer.team_id) if customer.team_id is not None else None
 
@@ -335,7 +388,8 @@ def customer_detail(
                 "product_customers": product_customers,
                 "totals": totals,
                 "status_filter": status_filter,
-                "modal_store": modal_store
+                "modal_store": modal_store,
+                "customer_extras": cms.customer_extras,
             }
         )
     else:
@@ -350,7 +404,9 @@ def customer_detail(
                 "filters_json": cms.filters,
                 "personalities": cms.personalities,
                 "teams": teams,
+                "users": users,
                 "modal_store": modal_store,
+                "customer_extras": cms.customer_extras,
             }
         )  
          
@@ -396,6 +452,7 @@ def customer_filter(
             "c_filters": cms.filters,
             "personalities": cms.personalities,
             "teams": teams,
+            "customer_extras": cms.customer_extras,
         }
     )
 

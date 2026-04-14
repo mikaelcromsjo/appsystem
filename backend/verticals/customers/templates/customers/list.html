@@ -110,7 +110,7 @@
                     :hx-vals="JSON.stringify({ team_id: team_id, selected_ids: { selected_ids: $store.customers.getSelectedIds() } })"
                     hx-post="/customers/assign" hx-ext="json-enc" hx-swap="none"
                     class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200">
-                    {{ 'Assign' | t }}
+                    {{ 'Assign Team' | t }}
                 </button>
 
                 <!-- Team selection -->
@@ -119,6 +119,27 @@
                     <option value="">{{ 'Select Team...' | t }}</option>
                     {% for team in teams %}
                     <option value="{{ team.id }}">{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+
+            </div>
+
+            <div x-data="{ user_id: ''}">
+
+                <!-- Assign User button -->
+                <button
+                    :hx-vals="JSON.stringify({ user_id: user_id, selected_ids: { selected_ids: $store.customers.getSelectedIds() } })"
+                    hx-post="/customers/assign_user" hx-ext="json-enc" hx-swap="none"
+                    class="px-3 py-1 border rounded bg-gray-100 hover:bg-gray-200">
+                    {{ 'Assign User' | t }}
+                </button>
+
+                <!-- User selection -->
+                <select id="user-select" name="user_id" x-model="user_id" class="border p-1">
+
+                    <option value="">{{ 'Select User...' | t }}</option>
+                    {% for u in users %}
+                    <option value="{{ u.id }}">{{ u.username }}</option>
                     {% endfor %}
                 </select>
 

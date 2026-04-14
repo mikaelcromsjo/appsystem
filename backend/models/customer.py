@@ -19,7 +19,6 @@ class Customer(BaseMixin, Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     last_call_date = Column(DateTime, nullable=True)
-    code_name = Column(Boolean, nullable=True)
     email = Column(String, nullable=True)
     phone = Column(String, nullable=True)
     description_phone = Column(String, nullable=True)
@@ -27,20 +26,37 @@ class Customer(BaseMixin, Base):
     contributes = Column(Integer, nullable=True)
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     team = relationship("Team", back_populates="customers")
+    assigned_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    assigned_user = relationship("User", foreign_keys=[assigned_user_id])
     comment = Column(String, nullable=True)
     sub_caller = Column(String, nullable=True)
     organisations = Column(JSON, default=[])
     categories = Column(JSON, default=[])
     personality_type = Column(Integer, nullable=True)
-    controlled = Column(Boolean, default=False)
-    filter_a = Column(Boolean, default=False)
-    filter_b = Column(Boolean, default=False)
-    filter_c = Column(Boolean, default=False)
-    filter_d = Column(Boolean, default=False)
-    filter_e = Column(Boolean, default=False)
-    filter_f = Column(Boolean, default=False)
-    filter_g = Column(Boolean, default=False)
-    filter_h = Column(Boolean, default=False)
+    is_filter_1 = Column(Boolean, default=False)
+    is_filter_2 = Column(Boolean, default=False)
+    is_filter_3 = Column(Boolean, default=False)
+    is_filter_4 = Column(Boolean, default=False)
+    is_filter_5 = Column(Boolean, default=False)
+    is_filter_6 = Column(Boolean, default=False)
+    is_filter_7 = Column(Boolean, default=False)
+    is_filter_8 = Column(Boolean, default=False)
+    is_filter_9 = Column(Boolean, default=False)
+    is_filter_10 = Column(Boolean, default=False)
+    is_filter_11 = Column(Boolean, default=False)
+    is_filter_12 = Column(Boolean, default=False)
+    is_filter_13 = Column(Boolean, default=False)
+    is_filter_14 = Column(Boolean, default=False)
+    is_filter_15 = Column(Boolean, default=False)
+    is_filter_16 = Column(Boolean, default=False)
+    is_filter_17 = Column(Boolean, default=False)
+    is_filter_18 = Column(Boolean, default=False)
+    is_filter_19 = Column(Boolean, default=False)
+    is_filter_20 = Column(Boolean, default=False)
+    is_filter_21 = Column(Boolean, default=False)
+    is_filter_22 = Column(Boolean, default=False)
+    is_filter_23 = Column(Boolean, default=False)
+    is_filter_24 = Column(Boolean, default=False)
     tags = Column(JSON, default=[])
     extra = Column(MutableDict.as_mutable(JSON), default=dict)
 
@@ -58,19 +74,18 @@ class CustomerUpdate(BaseModel):
     personality_type: Optional[int] = None
     contributes: Optional[int] = None
     team: Optional[int] = None
-    controlled: Optional[bool] = False
-    filter_a: Optional[bool] = False
-    filter_b: Optional[bool] = False
-    filter_c: Optional[bool] = False
-    filter_d: Optional[bool] = False
-    filter_e: Optional[bool] = False
-    filter_f: Optional[bool] = False
-    filter_g: Optional[bool] = False
-    filter_h: Optional[bool] = False
+    assigned_user_id: Optional[int] = None
+    is_filter_1: Optional[bool] = False
+    is_filter_2: Optional[bool] = False
+    is_filter_3: Optional[bool] = False
+    is_filter_4: Optional[bool] = False
+    is_filter_5: Optional[bool] = False
+    is_filter_6: Optional[bool] = False
+    is_filter_7: Optional[bool] = False
+    is_filter_8: Optional[bool] = False
     categories: Optional[List[str]] = []
     tags: Optional[List[str]] = []
     extra: Optional[Dict[str, Any]] = None
-    code_name: Optional[bool] = False
 
     @field_validator("phone")
     def normalize_phone(cls, v: Optional[str]):

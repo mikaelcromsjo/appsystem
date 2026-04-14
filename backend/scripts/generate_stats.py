@@ -71,7 +71,7 @@ def parse_args():
     parser.add_argument("--from", dest="date_from", required=False, help="Start date (YYYY-MM-DD)")
     parser.add_argument("--to", dest="date_to", required=False, help="End date (YYYY-MM-DD)")
     parser.add_argument("--team", help="Filter by team name")
-    parser.add_argument("--product-type", choices=["type_a", "type_b", "type_c", "type_d", "type_e", "type_f", "type_g"], help="Filter products by type")
+    parser.add_argument("--product-type", choices=["is_filter_1", "is_filter_2", "is_filter_3", "is_filter_4", "is_filter_5", "is_filter_6", "is_filter_7"], help="Filter products by type")
     parser.add_argument("--chart", choices=[
         "calls_over_time",
         "team_performance",

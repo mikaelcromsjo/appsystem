@@ -46,7 +46,6 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 ALLOWED_SCRIPTS = {
     "manage_users": "/app/backend/scripts/manage_users.py",
     "stats": "/app/backend/scripts/generate_stats.py",
-#    "test_data": "/app/backend/scripts/generate_test_data.py",
     "inspect_db": "/app/backend/scripts/inspect_db.py",    
 }
 
@@ -61,11 +60,8 @@ SCRIPT_EXAMPLES = {
         "Rita grafen 'team_performance' för månadens statistik<br>--chart team_performance",
         "Rita grafen 'product_participation' för vecka 2025-10-01 till 2025-10-07<br>--from 2025-10-01 --to 2025-10-07 --chart product_participation",
         "Visa daglig statistik för team Kalle<br>--team Kalle --chart calls_over_time",
-        "Visa statistik för producttyp type_a under oktober<br>--from 2025-10-01 --to 2025-10-31 --product-type type_a --chart calls_over_time",
+        "Visa statistik för producttyp filter_a under oktober<br>--from 2025-10-01 --to 2025-10-31 --product-type filter_a --chart calls_over_time",
         "Generera rapport på engelska<br>--lang en --chart team_performance"
-    ],
-    "test_data": [
-        "Skapa testdata: användare, ringhistorik mm<br>"  # args empty
     ],
     "inspect_db": [
         "--database DATABASE [--limit LIMIT] [--filter FILTER]Visa databasdump<br>" 
@@ -276,14 +272,14 @@ def create_customer_from_row(row: dict, db):
         categories=_parse_id_list(row.get("categories")),
         personality_type=int(row.get("personality_type") or 0) or None,
         controlled=_parse_bool(row.get("controlled")),
-        filter_a=_parse_bool(row.get("filter_a")),
-        filter_b=_parse_bool(row.get("filter_b")),
-        filter_c=_parse_bool(row.get("filter_c")),
-        filter_d=_parse_bool(row.get("filter_d")),
-        filter_e=_parse_bool(row.get("filter_e")),
-        filter_f=_parse_bool(row.get("filter_f")),
-        filter_g=_parse_bool(row.get("filter_g")),
-        filter_h=_parse_bool(row.get("filter_h")),
+        is_filter_1=_parse_bool(row.get("is_filter_1")),
+        is_filter_2=_parse_bool(row.get("is_filter_2")),
+        is_filter_3=_parse_bool(row.get("is_filter_3")),
+        is_filter_4=_parse_bool(row.get("is_filter_4")),
+        is_filter_5=_parse_bool(row.get("is_filter_5")),
+        is_filter_6=_parse_bool(row.get("is_filter_6")),
+        is_filter_7=_parse_bool(row.get("is_filter_7")),
+        is_filter_8=_parse_bool(row.get("is_filter_8")),
         tags=_parse_tags(row.get("tags")),
         extra=row.get("extra") if isinstance(row.get("extra"), dict) else {},
         # --- Team link ---
@@ -514,11 +510,13 @@ async def admin_update_user_team(
 
 def _cms_context(cfg: dict) -> dict:
     return {
-        "categories_json":    json.dumps(cfg["categories"],    indent=2, ensure_ascii=False),
-        "products_json":      json.dumps(cfg["products"],      indent=2, ensure_ascii=False),
-        "organisations_json": json.dumps(cfg["organisations"], indent=2, ensure_ascii=False),
-        "filters_json":       json.dumps(cfg["filters"],       indent=2, ensure_ascii=False),
-        "personalities_json": json.dumps(cfg["personalities"], indent=2, ensure_ascii=False),
+        "categories_json":       json.dumps(cfg["categories"],               indent=2, ensure_ascii=False),
+        "products_json":         json.dumps(cfg["products"],                 indent=2, ensure_ascii=False),
+        "organisations_json":    json.dumps(cfg["organisations"],            indent=2, ensure_ascii=False),
+        "filters_json":          json.dumps(cfg["filters"],                  indent=2, ensure_ascii=False),
+        "personalities_json":    json.dumps(cfg["personalities"],            indent=2, ensure_ascii=False),
+        "product_extras_json":   json.dumps(cfg.get("product_extras", {}),   indent=2, ensure_ascii=False),
+        "customer_extras_json":  json.dumps(cfg.get("customer_extras", {}),  indent=2, ensure_ascii=False),
     }
 
 
@@ -540,14 +538,18 @@ def save_data(
     organisations_text: str = Form(...),
     filters_text: str = Form(...),
     personalities_text: str = Form(...),
+    product_extras_text: str = Form(default="{}"),
+    customer_extras_text: str = Form(default="{}"),
 ):
     try:
         cfg = {
-            "categories":    json.loads(categories_text),
-            "products":      json.loads(products_text),
-            "organisations": json.loads(organisations_text),
-            "filters":       json.loads(filters_text),
-            "personalities": json.loads(personalities_text),
+            "categories":      json.loads(categories_text),
+            "products":        json.loads(products_text),
+            "organisations":   json.loads(organisations_text),
+            "filters":         json.loads(filters_text),
+            "personalities":   json.loads(personalities_text),
+            "product_extras":  json.loads(product_extras_text),
+            "customer_extras": json.loads(customer_extras_text),
         }
     except json.JSONDecodeError as e:
         return HTMLResponse(

@@ -19,5 +19,6 @@ COLUMNS = [
     {"key": "phone",    "label": "Phone",    "class": "w-[20%]"},
     {"key": "location", "label": "Location", "class": "w-[20%]"},
     {"key": "team",     "label": "Caller",   "class": "w-[20%]", "admin_only": True},
+    {"key": "assigned_user", "label": "Assigned User", "class": "w-[20%]"},
     {"key": "command",  "label": "Command",  "class": "w-[20%]"},
 ]
