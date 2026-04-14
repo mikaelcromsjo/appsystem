@@ -80,16 +80,46 @@ class CustomerUpdate(BaseModel):
 
     @field_validator("tags", mode="before")
     def parse_tags(cls, v):
-        """Accept Tagify JSON string, plain CSV, or list."""
+        """Accept Tagify JSON string, plain CSV, or list. Always returns clean list of strings."""
         if not v:
             return []
+
         if isinstance(v, list):
-            return [item.get("value", item) if isinstance(item, dict) else item for item in v]
+            # Extract values from list items (handles Tagify format with dicts)
+            result = []
+            for item in v:
+                if isinstance(item, dict):
+                    tag = item.get("value", "")
+                else:
+                    tag = str(item).strip()
+                if tag:
+                    result.append(tag)
+            return result
+
         if isinstance(v, str):
+            # Try JSON parsing first
             try:
                 parsed = json.loads(v)
                 if isinstance(parsed, list):
-                    return [item.get("value", item) if isinstance(item, dict) else item for item in parsed]
-            except json.JSONDecodeError:
-                return [t.strip() for t in v.split(",") if t.strip()]
+                    result = []
+                    for item in parsed:
+                        if isinstance(item, dict):
+                            tag = item.get("value", "")
+                        else:
+                            tag = str(item).strip()
+                        if tag:
+                            result.append(tag)
+                    return result
+            except (json.JSONDecodeError, ValueError):
+                pass
+
+            # Fall back to CSV, but be defensive about malformed strings
+            # Remove any common escape characters and quotes
+            cleaned = v.replace("\\'", "'").replace('\\"', '"').replace("\\\\", "\\")
+            cleaned = cleaned.strip("'\"[]").strip()
+
+            # Split by comma and clean each tag
+            if cleaned:
+                return [t.strip("'\" ") for t in cleaned.split(",") if t.strip("'\" ")]
+
         return []

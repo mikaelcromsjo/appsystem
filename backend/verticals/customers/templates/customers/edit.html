@@ -182,7 +182,15 @@
      x-init="initTagify($el)"
      data-object-type="tags">
     <label class="block font-semibold">{{ "Tags (comma separated)" | t }}</label>
-    <input type="text" name="tags" value="{{ customer.tags | default('') }}" class="border p-1 w-full"/>
+    {% if customer.tags %}
+        {% if customer.tags is string %}
+            <input type="text" name="tags" value="{{ customer.tags }}" class="border p-1 w-full"/>
+        {% else %}
+            <input type="text" name="tags" value="{{ customer.tags | join(', ') }}" class="border p-1 w-full"/>
+        {% endif %}
+    {% else %}
+        <input type="text" name="tags" value="" class="border p-1 w-full"/>
+    {% endif %}
 </div>
 
     <!-- User ID -->
