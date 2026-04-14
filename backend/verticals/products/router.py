@@ -68,10 +68,19 @@ def products_rows(
     user = Depends(get_current_user),
     cms: CmsConfig = Depends(get_cms_config),
 ):
-    products = db.query(Product).all()
+    from core.functions.helpers import build_filters
+    from core.functions.filters import get_exact_vals
+    filter_dict = request.session.get("product_filters", {})
+    type_id = filter_dict.get("type_id") or None
+    filters = build_filters(filter_dict, Product, json_fields=cms.product_extras(type_id))
+    sql_filters, _ = get_exact_vals(filters)
+    query = db.query(Product)
+    if sql_filters:
+        query = query.filter(*sql_filters)
+    products = query.all()
     return templates.TemplateResponse(
         "products/rows.html",
-        {"request": request, "products": products, "products_map": cms.products_map},
+        {"request": request, "products": products, "products_map": cms.products_map, "is_admin": user.admin},
     )
 
 
@@ -82,14 +91,19 @@ def products_rows(
 def new_product(
     request: Request,
     db: Session = Depends(get_db),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
     product = Product.empty()
-
+    first_type_id = next(iter(cms.products), None)
     return templates.TemplateResponse(
         "products/edit.html", {
-            "request": request, 
-            "product": product, 
-            "editable": True}
+            "request": request,
+            "product": product,
+            "editable": True,
+            "products": cms.products,
+            "filters": cms.filters,
+            "product_extras": cms.product_extras(first_type_id),
+        }
     )               
 
 # -----------------------------
@@ -144,27 +158,50 @@ def product_detail(
         return templates.TemplateResponse(
             "products/info.html",
             {
-                "request": request, 
-                "product": product, 
+                "request": request,
+                "product": product,
                 "product_customers": product_customers,
                 "totals": totals,
                 "status_filter": status_filter,
                 "user": user,
                 "products_map": cms.products_map,
                 "products_json": cms.products,
-                "filters_map": cms.filters_map
+                "filters_map": cms.filters_map,
+                "product_extras": cms.product_extras(product.type_id),
             }
         )
     else:
         # Render full template
         return templates.TemplateResponse(
-            "products/edit.html", {"request": request, 
-                                   "product": product, 
-                                   "editable": True,
-                                    "products": cms.products,
-                                    }
+            "products/edit.html", {
+                "request": request,
+                "product": product,
+                "editable": True,
+                "products": cms.products,
+                "filters": cms.filters,
+                "product_extras": cms.product_extras(product.type_id),
+            }
         )
      
+
+@router.get("/extras-form", name="product_extras_form", response_class=HTMLResponse)
+def product_extras_form(
+    request: Request,
+    type_id: str = Query(default=""),
+    filter: str = Query(default=""),
+    cms: CmsConfig = Depends(get_cms_config),
+):
+    product_extras = cms.product_extras(type_id)
+    if filter:
+        return templates.TemplateResponse(
+            "products/_extras_filter.html",
+            {"request": request, "product_extras": product_extras, "filter_dict": {}},
+        )
+    return templates.TemplateResponse(
+        "products/_extras_fields.html",
+        {"request": request, "product_extras": product_extras, "product": None},
+    )
+
 
 from sqlalchemy.inspection import inspect
 
@@ -248,7 +285,7 @@ def delete_product(product_id: str, db: Session = Depends(get_db), user = Depend
     db.commit()
     return {"detail": f"Product {product.name} deleted successfully"}
 
-@router.post("/set_filter", name="set_filter", response_class=HTMLResponse)
+@router.post("/set_filter", name="set_product_date_filter", response_class=HTMLResponse)
 async def set_filter(
     request: Request,
     db: Session = Depends(get_db),
@@ -279,5 +316,38 @@ async def set_filter(
 
     response = HTMLResponse("")
     response.headers["HX-Popup-Message"] = "Updated"
+    response.headers["HX-Trigger"] = "productsRowsReload"
+    return response
+
+
+@router.get("/filter", name="product_filter", response_class=HTMLResponse)
+def product_filter(
+    request: Request,
+    db: Session = Depends(get_db),
+    cms: CmsConfig = Depends(get_cms_config),
+):
+    filter_dict = request.session.get("product_filters", {})
+    return templates.TemplateResponse(
+        "products/filter.html",
+        {
+            "request": request,
+            "filter_dict": filter_dict,
+            "products": cms.products,
+            "p_filters": cms.filters,
+        }
+    )
+
+
+@router.post("/filter", name="set_product_filter", response_class=HTMLResponse)
+async def set_product_filter(
+    request: Request,
+    update_data: Update,
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user),
+):
+    data_dict = update_data.model_dump()
+    request.session["product_filters"] = data_dict
+
+    response = HTMLResponse("")
     response.headers["HX-Trigger"] = "productsRowsReload"
     return response

@@ -8,6 +8,7 @@ from core.models.base import Base
 from fastapi import Request
 from pydantic import BaseModel, Field
 from core.functions.helpers import build_filters
+from core.functions.filters import get_exact_vals, exact_vals
 from typing import List, Optional
 import datetime
 
@@ -67,7 +68,7 @@ def assign_customers_team(db: Session, ids: List[int], team_id: int):
     db.commit()
     return updated_rows
 
-def get_user_customers(db, request, user):
+def get_user_customers(db, request, user, json_fields: dict = None):
  #   calculate_last_call(db)
     query = db.query(Customer)
 
@@ -75,7 +76,7 @@ def get_user_customers(db, request, user):
         query = query.filter(Customer.team_id == user.team_id)
 
     filter_dict = request.session.get("customer_filters", {})
-    filters = build_filters(filter_dict, Customer)
+    filters = build_filters(filter_dict, Customer, json_fields=json_fields)
 
     sql_filters, exact_filters = get_exact_vals(filters)
 
@@ -93,40 +94,6 @@ def get_user_customers(db, request, user):
         rows = exact_vals(rows, exact_filters)
 
     return rows
-
-
-def get_exact_vals(filters):
-    """Separate SQLAlchemy filters from Python-side exact match filters."""
-    exact_filters = [f for f in filters if isinstance(f, dict) and "exact_vals" in f]
-    sql_filters = [f for f in filters if not (isinstance(f, dict) and "exact_vals" in f)]
-    return sql_filters, exact_filters
-
-def exact_vals(rows, exact_filters):
-    results = []
-    for row in rows:
-        include = True
-        for f in exact_filters:
-            colname = f["column"]
-            expected_vals = set(f["exact_vals"])
-            raw_val = getattr(row, colname, None)
-
-            if raw_val is None:
-                include = False
-                break
-
-            # Normalize actual values (works for CSV or JSON)
-            if isinstance(raw_val, list):
-                actual_vals = set(str(v) for v in raw_val)
-            else:
-                actual_vals = set(v.strip() for v in str(raw_val).split(",") if v.strip())
-
-            if actual_vals != expected_vals:
-                include = False
-                break
-
-        if include:
-            results.append(row)
-    return results
 
 def calculate_last_call(db: Session):
     customers = db.query(Customer).all()
