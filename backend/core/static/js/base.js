@@ -379,14 +379,39 @@ document.addEventListener('alpine:init', () => {
     },
   });
 
+  Alpine.store('alarms', {
+    selected: {},
+
+    initInTable() {
+      this.selected = {};
+    },
+
+    getSelectedIds() {
+      return Object.keys(this.selected)
+        .filter(id => this.selected[id])
+        .map(id => parseInt(id));
+    },
+
+    selectAll(checkboxes) {
+      checkboxes.forEach(cb => {
+        const id = cb.dataset.id;
+        if (id) this.selected[id] = true;
+      });
+    },
+
+    clearAll() {
+      this.selected = {};
+    },
+  });
+
   Alpine.store('productFilters', {
-    filter_a: true,
-    filter_b: true,
-    filter_c: true,
-    filter_d: true,
-    filter_e: true,
-    filter_f: true,
-    filter_g: true
+    is_filter_1: true,
+    is_filter_2: true,
+    is_filter_3: true,
+    is_filter_4: true,
+    is_filter_5: true,
+    is_filter_6: true,
+    is_filter_7: true
   });
 
   Alpine.store('product', {
