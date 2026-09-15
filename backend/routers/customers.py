@@ -68,7 +68,7 @@ def customers_list(
     teams = db.query(Team).all()
 
     return templates.TemplateResponse(
-        "customers/list.html",
+        request, "customers/list.html",
         {"request": request,
          "customers": customers,
          "is_admin": user.admin,
@@ -242,7 +242,7 @@ async def upsert_customer(
     customers = get_user_customers(db, request, user)
     
     response =  templates.TemplateResponse(
-        "customers/list.html",
+        request, "customers/list.html",
         {
             "request": request, 
             "customers": customers,
@@ -318,7 +318,7 @@ def customer_detail(
 
         # Render short template
         return templates.TemplateResponse(
-            "customers/info.html",
+            request, "customers/info.html",
             {
                 "request": request, 
                 "customer": customer, 
@@ -336,7 +336,7 @@ def customer_detail(
     else:
         # Render full template
         return templates.TemplateResponse(
-            "customers/edit.html",
+            request, "customers/edit.html",
             {
                 "request": request, 
                 "customer": customer, 
@@ -381,7 +381,7 @@ def customer_filter(
     filter_dict = request.session.get("customer_filters", {})
 
     return templates.TemplateResponse(
-        "customers/filter.html",
+        request, "customers/filter.html",
         {
             "request": request, 
             "filter_dict": filter_dict, 
@@ -411,7 +411,7 @@ async def set_filter(
     teams = db.query(Team).all()
 
     return templates.TemplateResponse(
-        "customers/list.html",
+        request, "customers/list.html",
         {"request": request, "customers": customers, "teams": teams
         }
     )

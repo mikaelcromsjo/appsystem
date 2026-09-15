@@ -74,7 +74,7 @@ def alarms_list(
 
     from verticals.alarms import COLUMNS
     return templates.TemplateResponse(
-        "alarms/list.html", {"request": request, "alarms": alarms, "columns": COLUMNS}
+        request, "alarms/list.html", {"request": request, "alarms": alarms, "columns": COLUMNS}
     )
 
 
@@ -114,7 +114,7 @@ def alarms_rows(
 
     alarms = query.all()
     return templates.TemplateResponse(
-        "alarms/rows.html",
+        request, "alarms/rows.html",
         {"request": request, "alarms": alarms},
     )
 
@@ -132,7 +132,7 @@ def new_alarm(
     alarm = Alarm.empty()
 
     return templates.TemplateResponse(
-        "alarms/edit.html", {"request": request, "alarm": alarm, "editable": True, "filters_json": cms.filters}
+        request, "alarms/edit.html", {"request": request, "alarm": alarm, "editable": True, "filters_json": cms.filters}
     )               
 
 from urllib.parse import urlencode
@@ -182,7 +182,7 @@ def alarm_detail(
     if list == "short":
         # Render short template
         return templates.TemplateResponse(
-            "alarms/info.html",
+            request, "alarms/info.html",
             {
                 "request": request, 
                 "alarm": alarm, 
@@ -192,7 +192,7 @@ def alarm_detail(
     else:
         # Render full template
         return templates.TemplateResponse(
-            "alarms/edit.html", {"request": request, "alarm": alarm, "editable": True}
+            request, "alarms/edit.html", {"request": request, "alarm": alarm, "editable": True}
         )
      
 

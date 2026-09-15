@@ -1,9 +1,12 @@
+
+name: appsystem
+
 services:
   app:
     build: .
-    container_name: fastapi_htmx_dev
+    container_name: appsystem
     ports:
-      - "127.0.0.1:8010:8010"
+      - "8070:8070"
     volumes:
       - ./backend:/app/backend
       - ./scripts:/app/scripts
@@ -11,13 +14,11 @@ services:
     environment:
       - MASTER_DATABASE_URL=sqlite:////dbdata/master.db
       - DATABASE_URL=sqlite:////dbdata/app.db
-      - DEBUG=true
-      # Set in production:
-      # - JWT_SECRET_KEY=<strong-random-key>
-      # - SESSION_SECRET=<strong-random-key>
-      # - ACCESS_TOKEN_EXPIRE_MINUTES=60
-
-    command: uvicorn main:app --host 0.0.0.0 --port 8010 --proxy-headers --forwarded-allow-ips='*'      
+      - JWT_SECRET_KEY=3ec3228e07b4eb87800a6a97e583aa4f58737a651ae6e1790e49a1b0b013c8de
+      - SESSION_SECRET=1c86367f9bd0d286b0b37665286f9863131a7ffcc993b8b41036010664855141
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - APP_BASE_URL=https://system.ia-ai.se
+    command: uvicorn main:app --host 0.0.0.0 --port 8070 --reload --proxy-headers --forwarded-allow-ips='*'
 
 volumes:
   appsystem_dbdata:

@@ -30,7 +30,7 @@ def favicon():
 
 @router.get("/login")
 async def login_get(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(request, "login.html", {"request": request})
 
 
 @router.post("/login")
@@ -48,10 +48,11 @@ async def login_post(
     global_user = master_db.query(GlobalUser).filter_by(email=email).first()
     if not global_user or not global_user.verify_password(password):
         return templates.TemplateResponse(
-            "login.html", {"request": request, "error": "Invalid credentials"}
+            request, "login.html", {"request": request, "error": "Invalid credentials"}
         )
 
     request.session["global_user_id"] = global_user.id
+    request.session["is_superadmin"] = bool(global_user.is_superadmin)
 
     tenants = (
         master_db.query(Tenant)
@@ -63,9 +64,12 @@ async def login_post(
     if len(tenants) == 1:
         return await _activate_tenant(request, master_db, global_user.id, tenants[0])
 
+    if not tenants and global_user.is_superadmin:
+        return RedirectResponse(url="/global-admin/", status_code=303)
+
     # Multiple tenants — show picker
     return templates.TemplateResponse(
-        "pick_tenant.html", {"request": request, "tenants": tenants}
+        request, "pick_tenant.html", {"request": request, "tenants": tenants}
     )
 
 
@@ -119,7 +123,7 @@ async def _send_2fa_link(request: Request, master_db: Session, global_user_id: i
     send_login_link(global_user.email, token)
 
     return templates.TemplateResponse(
-        "verify_pending.html",
+        request, "verify_pending.html",
         {"request": request, "email": global_user.email},
     )
 
@@ -165,7 +169,7 @@ async def verify_login(request: Request, token: str, master_db: Session = Depend
 
     if not login_token or not login_token.is_valid:
         return templates.TemplateResponse(
-            "login.html",
+            request, "login.html",
             {"request": request, "error": "This link is invalid or has expired. Please log in again."},
         )
 
@@ -182,7 +186,7 @@ async def logout(request: Request):
     request.session.clear()
     clear_translator_cache()
     return templates.TemplateResponse(
-        "login.html", {"request": request, "message": "Logged out"}
+        request, "login.html", {"request": request, "message": "Logged out"}
     )
 
 
@@ -247,7 +251,7 @@ async def root(request: Request, user=Depends(get_current_user)):
 
     if request.session.get("user"):
         return RedirectResponse(url="/dashboard")
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(request, "login.html", {"request": request})
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
@@ -266,7 +270,7 @@ async def dashboard(
             request.session["is_superadmin"] = False
 
     return templates.TemplateResponse(
-        "base.html",
+        request, "base.html",
         {
             "request": request,
             "title": "Dashboard",

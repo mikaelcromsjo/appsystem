@@ -81,7 +81,7 @@ async def upsert_user(
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
 
     response = templates.TemplateResponse(
-        "user/info.html",
+        request, "user/info.html",
         {
             "request": request,
             "user": data_record

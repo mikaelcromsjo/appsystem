@@ -107,7 +107,7 @@ def call_poducts_list(
 # Customer Details and call list (HTMX fragment)
 # -----------------------------
 
-from sqlalchemy import desc
+from sqlalchemy import desc, select
 from state import user_data, active_connections
 from core.models.models import BaseMixin, Update, User
 
@@ -155,7 +155,7 @@ async def customer_data(
     calls = db.query(Call).filter(Call.customer_id == int(customer_id)).order_by(desc(Call.id)).limit(50).all()
 
     return templates.TemplateResponse(
-        "calls/customer_calls.html",
+        request, "calls/customer_calls.html",
         {
             "request": request,
             "customer": customer,
@@ -189,7 +189,7 @@ def customer_calls(
     calls = db.query(Call).filter(Call.team_id == int(customer_id)).all()
 
     return templates.TemplateResponse(
-        "calls/call_log.html",
+        request, "calls/call_log.html",
         {"request": request, "calls": calls},
     )
 
@@ -198,13 +198,20 @@ def products_list(
     request: Request,
     filter: Optional[str] = None,
     db: Session = Depends(get_db),
+    user = Depends(get_current_user),
+    cms: CmsConfig = Depends(get_cms_config),
 ):
     query = select(Product)
     if filter:
         query = query.where(Product.name.contains(filter))
     products = db.execute(query).scalars().all()
+
+    from verticals.products import COLUMNS
     return templates.TemplateResponse(
-        "products/list.html", {"request": request, "products": products}
+        request, "products/list.html", {
+            "request": request, "products": products, "is_admin": user.admin,
+            "products_map": cms.products_map, "columns": COLUMNS,
+        }
     )
 
 
@@ -219,7 +226,7 @@ def number(
 ):
     
     return templates.TemplateResponse(
-        "calls/number.html", {"request": request, "user": user}
+        request, "calls/number.html", {"request": request, "user": user}
     )
 
 
@@ -247,7 +254,7 @@ def call_details(
     )
 
     return templates.TemplateResponse(
-        "calls/info.html",
+        request, "calls/info.html",
         {
             "request": request, 
             "call": call, 
@@ -447,7 +454,7 @@ def select_customer(customer_id: int, request: Request, db: Session = Depends(ge
         return HTMLResponse("<div>Customer not found</div>", status_code=404)
 
     return templates.TemplateResponse(
-        "calls/customer_detail.html",
+        request, "calls/customer_detail.html",
         {"request": request, "customer": customer},
     )
 
@@ -465,7 +472,7 @@ def customer_info(customer_id: int, request: Request, db: Session = Depends(get_
         return HTMLResponse("<div>Customer not found</div>", status_code=404)
 
     return templates.TemplateResponse(
-        "calls/customer_info.html",
+        request, "calls/customer_info.html",
         {"request": request, "customer": customer},
     )
 
@@ -482,7 +489,7 @@ def call_info(call_id: int, request: Request, db: Session = Depends(get_db)):
         return HTMLResponse("<div>Customer not found</div>", status_code=404)
 
     return templates.TemplateResponse(
-        "calls/call_info.html",
+        request, "calls/call_info.html",
         {"request": request, "call": call},
     )
 
@@ -503,7 +510,7 @@ def customer_call_log(customer_id: int, request: Request, db: Session = Depends(
     )
 
     return templates.TemplateResponse(
-        "calls/fragments/customer_calls.html",
+        request, "calls/fragments/customer_calls.html",
         {"request": request, "calls": calls, "customer_id": customer_id},
     )
 
@@ -524,7 +531,7 @@ def list_customer_products(customer_id: int, request: Request, db: Session = Dep
     )
 
     return templates.TemplateResponse(
-        "calls/fragments/customer_products.html",
+        request, "calls/fragments/customer_products.html",
         {"request": request, "products": products, "customer_id": customer_id},
     )
 
@@ -559,7 +566,7 @@ def calls_product_detail(
         product_type_status = product_customer.type_status
 
     return templates.TemplateResponse(
-        "calls/product_info.html",
+        request, "calls/product_info.html",
         {
             "request": request, 
             "product": product, 

@@ -53,7 +53,7 @@ def companies_rows(
         query = query.filter(Company.team_id == user.team_id)
     companies = query.all()
     return templates.TemplateResponse(
-        "companies/rows.html",
+        request, "companies/rows.html",
         {"request": request, "companies": companies},
     )
 
@@ -77,7 +77,7 @@ def company_new(
     teams = query.all()
 
     return templates.TemplateResponse(
-        "companies/edit.html",
+        request, "companies/edit.html",
         {
             "request": request, 
             "company": company, 
@@ -200,7 +200,7 @@ def company_detail(
     if list == "short":
         # Render short template
         return templates.TemplateResponse(
-            "companies/info.html",
+            request, "companies/info.html",
             {
                 "request": request, 
                 "company": company, 
@@ -211,7 +211,7 @@ def company_detail(
     else:
         # Render full template
         return templates.TemplateResponse(
-            "companies/edit.html",
+            request, "companies/edit.html",
             {
                 "request": request, 
                 "company": company, 

@@ -80,7 +80,7 @@ async def admin_script(
         return HTMLResponse("Access denied", status_code=403)
 
     return templates.TemplateResponse(
-        "admin/script.html",
+        request, "admin/script.html",
         {"request": request, "output": None, "html_output": None, "scripts": ALLOWED_SCRIPTS, "script_examples": SCRIPT_EXAMPLES},
     )
 
@@ -152,7 +152,7 @@ async def run_admin_script(
         print("Error")
 
     return templates.TemplateResponse(
-        "admin/script_output.html",
+        request, "admin/script_output.html",
         {"request": request, "output": output, "html_output": html_output, "scripts": ALLOWED_SCRIPTS, "script_examples": SCRIPT_EXAMPLES},
     )
 
@@ -170,7 +170,7 @@ def admin_dashboard(
     
 
     return templates.TemplateResponse(
-        "admin/dashboard.html", {"request": request }
+        request, "admin/dashboard.html", {"request": request }
     )
 
 
@@ -295,7 +295,7 @@ def admin_import(
 ):
 
     return templates.TemplateResponse(
-        "admin/import.html", {"request": request }
+        request, "admin/import.html", {"request": request }
     )
 
 @router.post("/import", response_class=HTMLResponse)
@@ -315,7 +315,7 @@ async def import_customers(
         content = csv_text.strip()
     else:
         return templates.TemplateResponse(
-            "partials/message.html",
+            request, "partials/message.html",
             {"request": request, "message": "No CSV data provided."},
         )
 
@@ -382,7 +382,7 @@ def admin_users(
         return HTMLResponse("Access denied", status_code=403)
     ctx = _get_users_context(db)
     return templates.TemplateResponse(
-        "admin/users.html",
+        request, "admin/users.html",
         {"request": request, **ctx},
     )
 
@@ -407,7 +407,7 @@ async def admin_create_user(
     if existing_global:
         ctx = _get_users_context(db)
         return templates.TemplateResponse(
-            "admin/users.html",
+            request, "admin/users.html",
             {"request": request, **ctx, "error": f"Email '{email}' is already registered."},
         )
 
@@ -438,7 +438,7 @@ async def admin_create_user(
 
     ctx = _get_users_context(db)
     return templates.TemplateResponse(
-        "admin/users.html",
+        request, "admin/users.html",
         {"request": request, **ctx, "saved": True},
     )
 
@@ -457,7 +457,7 @@ async def admin_create_team(
     if not name:
         ctx = _get_users_context(db)
         return templates.TemplateResponse(
-            "admin/users.html",
+            request, "admin/users.html",
             {"request": request, **ctx, "error": "Team name cannot be empty."},
         )
 
@@ -465,7 +465,7 @@ async def admin_create_team(
     if existing_team:
         ctx = _get_users_context(db)
         return templates.TemplateResponse(
-            "admin/users.html",
+            request, "admin/users.html",
             {"request": request, **ctx, "error": f"Team '{name}' already exists."},
         )
 
@@ -475,7 +475,7 @@ async def admin_create_team(
 
     ctx = _get_users_context(db)
     return templates.TemplateResponse(
-        "admin/users.html",
+        request, "admin/users.html",
         {"request": request, **ctx, "saved": True},
     )
 
@@ -495,7 +495,7 @@ async def admin_update_user_team(
     if not target_user:
         ctx = _get_users_context(db)
         return templates.TemplateResponse(
-            "admin/users.html",
+            request, "admin/users.html",
             {"request": request, **ctx, "error": "User not found."},
         )
 
@@ -505,7 +505,7 @@ async def admin_update_user_team(
 
     ctx = _get_users_context(db)
     return templates.TemplateResponse(
-        "admin/users.html",
+        request, "admin/users.html",
         {"request": request, **ctx, "saved": True},
     )
 
@@ -528,7 +528,7 @@ def admin_user_detail(
     nav_items = get_nav_items()
     verticals_with_roles = [v for v in nav_items if v.get("role_defs")]
     template = "admin/user_info.html" if list == "short" else "admin/user_edit.html"
-    return templates.TemplateResponse(template, {
+    return templates.TemplateResponse(request, template, {
         "request": request,
         "u": target_user,
         "teams": teams,
@@ -582,7 +582,7 @@ async def admin_update_user_admin(
     if not target_user:
         ctx = _get_users_context(db)
         return templates.TemplateResponse(
-            "admin/users.html",
+            request, "admin/users.html",
             {"request": request, **ctx, "error": "User not found."},
         )
 
@@ -591,7 +591,7 @@ async def admin_update_user_admin(
 
     ctx = _get_users_context(db)
     return templates.TemplateResponse(
-        "admin/users.html",
+        request, "admin/users.html",
         {"request": request, **ctx},
     )
 
@@ -610,7 +610,7 @@ async def admin_remove_user_role(
     target_user = db.query(User).filter_by(id=user_id).first()
     if not target_user:
         ctx = _get_users_context(db)
-        return templates.TemplateResponse("admin/users.html", {"request": request, **ctx})
+        return templates.TemplateResponse(request, "admin/users.html", {"request": request, **ctx})
 
     roles = dict(target_user.roles or {})
     roles.pop(vertical, None)
@@ -618,7 +618,7 @@ async def admin_remove_user_role(
     db.commit()
 
     ctx = _get_users_context(db)
-    return templates.TemplateResponse("admin/users.html", {"request": request, **ctx})
+    return templates.TemplateResponse(request, "admin/users.html", {"request": request, **ctx})
 
 
 @router.post("/users/{user_id}/add-role", response_class=HTMLResponse, name="admin_add_user_role")
@@ -635,7 +635,7 @@ async def admin_add_user_role(
     target_user = db.query(User).filter_by(id=user_id).first()
     if not target_user:
         ctx = _get_users_context(db)
-        return templates.TemplateResponse("admin/users.html", {"request": request, **ctx})
+        return templates.TemplateResponse(request, "admin/users.html", {"request": request, **ctx})
 
     from core.loader import get_nav_items
     nav_items = get_nav_items()
@@ -654,7 +654,7 @@ async def admin_add_user_role(
     db.commit()
 
     ctx = _get_users_context(db)
-    return templates.TemplateResponse("admin/users.html", {"request": request, **ctx})
+    return templates.TemplateResponse(request, "admin/users.html", {"request": request, **ctx})
 
 
 @router.post("/users/{user_id}/update-roles", response_class=HTMLResponse, name="admin_update_user_roles")
@@ -672,7 +672,7 @@ async def admin_update_user_roles(
     if not target_user:
         ctx = _get_users_context(db)
         return templates.TemplateResponse(
-            "admin/users.html",
+            request, "admin/users.html",
             {"request": request, **ctx, "error": "User not found."},
         )
 
@@ -686,7 +686,7 @@ async def admin_update_user_roles(
     except (json.JSONDecodeError, ValueError, TypeError) as e:
         ctx = _get_users_context(db)
         return templates.TemplateResponse(
-            "admin/users.html",
+            request, "admin/users.html",
             {"request": request, **ctx, "error": f"Invalid roles JSON: {e}"},
         )
 
@@ -695,7 +695,7 @@ async def admin_update_user_roles(
 
     ctx = _get_users_context(db)
     return templates.TemplateResponse(
-        "admin/users.html",
+        request, "admin/users.html",
         {"request": request, **ctx, "saved": True},
     )
 
@@ -716,7 +716,7 @@ def _cms_context(cfg: dict) -> dict:
 def admin_data(request: Request, db: Session = Depends(get_db)):
     cfg = load_cms_config(db)
     return templates.TemplateResponse(
-        "admin/data.html",
+        request, "admin/data.html",
         {"request": request, **_cms_context(cfg)},
     )
 
@@ -757,6 +757,6 @@ def save_data(
     db.commit()
 
     return templates.TemplateResponse(
-        "admin/data.html",
+        request, "admin/data.html",
         {"request": request, **_cms_context(cfg), "message": "Saved."},
     )

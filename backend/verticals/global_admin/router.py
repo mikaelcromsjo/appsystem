@@ -43,7 +43,7 @@ async def global_admin_dashboard(request: Request, master_db: Session = Depends(
     tenant_count = master_db.query(Tenant).count()
     user_count = master_db.query(GlobalUser).count()
     return templates.TemplateResponse(
-        "global_admin/dashboard.html",
+        request, "global_admin/dashboard.html",
         {"request": request, "tenant_count": tenant_count, "user_count": user_count},
     )
 
@@ -54,7 +54,7 @@ async def global_admin_dashboard(request: Request, master_db: Session = Depends(
 async def tenants_list(request: Request, master_db: Session = Depends(get_master_db)):
     tenants = master_db.query(Tenant).order_by(Tenant.id).all()
     return templates.TemplateResponse(
-        "global_admin/tenants.html",
+        request, "global_admin/tenants.html",
         {"request": request, "tenants": tenants},
     )
 
@@ -73,7 +73,7 @@ async def tenant_create(
     if master_db.query(Tenant).filter_by(slug=slug).first():
         tenants = master_db.query(Tenant).order_by(Tenant.id).all()
         return templates.TemplateResponse(
-            "global_admin/tenants.html",
+            request, "global_admin/tenants.html",
             {"request": request, "tenants": tenants, "error": f"Slug '{slug}' already exists"},
         )
 
@@ -149,7 +149,7 @@ async def tenant_create(
 
     tenants = master_db.query(Tenant).order_by(Tenant.id).all()
     return templates.TemplateResponse(
-        "global_admin/tenants.html",
+        request, "global_admin/tenants.html",
         {"request": request, "tenants": tenants, "saved_id": tenant.id},
     )
 
@@ -164,7 +164,7 @@ async def tenant_edit_form(
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
     return templates.TemplateResponse(
-        "global_admin/tenant_edit.html",
+        request, "global_admin/tenant_edit.html",
         {"request": request, "tenant": tenant},
     )
 
@@ -193,7 +193,7 @@ async def tenant_edit_save(
 
     tenants = master_db.query(Tenant).order_by(Tenant.id).all()
     return templates.TemplateResponse(
-        "global_admin/tenants.html",
+        request, "global_admin/tenants.html",
         {"request": request, "tenants": tenants, "saved_id": tenant_id},
     )
 
@@ -212,7 +212,7 @@ async def globalusers_list(request: Request, master_db: Session = Depends(get_ma
         for u in users
     }
     return templates.TemplateResponse(
-        "global_admin/globalusers.html",
+        request, "global_admin/globalusers.html",
         {"request": request, "users": users, "tenants": tenants, "memberships": memberships},
     )
 
@@ -233,7 +233,7 @@ async def globaluser_create(
             for u in users
         }
         return templates.TemplateResponse(
-            "global_admin/globalusers.html",
+            request, "global_admin/globalusers.html",
             {"request": request, "users": users, "tenants": tenants,
              "memberships": memberships, "error": f"Email {email} already exists"},
         )
@@ -319,7 +319,7 @@ async def global_admin_teams(
         tenant_db.close()
 
     return templates.TemplateResponse(
-        "global_admin/teams.html",
+        request, "global_admin/teams.html",
         {"request": request, "tenant": tenant, "teams": teams_data},
     )
 
@@ -344,7 +344,7 @@ async def global_admin_team_create(
             teams = tenant_db.query(Team).order_by(Team.name).all()
             teams_data = [{"id": t.id, "name": t.name} for t in teams]
             return templates.TemplateResponse(
-                "global_admin/teams.html",
+                request, "global_admin/teams.html",
                 {"request": request, "tenant": tenant, "teams": teams_data,
                  "error": f"Team '{name}' already exists."},
             )
@@ -357,7 +357,7 @@ async def global_admin_team_create(
         tenant_db.close()
 
     return templates.TemplateResponse(
-        "global_admin/teams.html",
+        request, "global_admin/teams.html",
         {"request": request, "tenant": tenant, "teams": teams_data, "saved": True},
     )
 
@@ -368,7 +368,7 @@ async def global_admin_team_create(
 async def global_admin_data(request: Request, master_db: Session = Depends(get_master_db)):
     cfg = load_global_cms_config(master_db)
     return templates.TemplateResponse(
-        "global_admin/data.html",
+        request, "global_admin/data.html",
         {"request": request, **_cms_context(cfg)},
     )
 
@@ -410,7 +410,7 @@ async def save_global_data(
     master_db.commit()
 
     return templates.TemplateResponse(
-        "global_admin/data.html",
+        request, "global_admin/data.html",
         {"request": request, **_cms_context(cfg), "message": "Saved."},
     )
 
@@ -447,7 +447,7 @@ def clean_output(raw_output: str) -> str:
 @router.get("/scripts", response_class=HTMLResponse, name="global_admin_scripts")
 async def global_admin_scripts(request: Request):
     return templates.TemplateResponse(
-        "global_admin/scripts.html",
+        request, "global_admin/scripts.html",
         {"request": request, "output": None, "html_output": None, "scripts": ALLOWED_SCRIPTS, "script_examples": SCRIPT_EXAMPLES},
     )
 
@@ -460,7 +460,7 @@ async def run_global_admin_script(
 ):
     if script_name not in ALLOWED_SCRIPTS:
         return templates.TemplateResponse(
-            "global_admin/scripts.html",
+            request, "global_admin/scripts.html",
             {
                 "request": request,
                 "output": f"❌ Script '{script_name}' not found",
@@ -484,7 +484,7 @@ async def run_global_admin_script(
         output = clean_output(output)
 
         return templates.TemplateResponse(
-            "global_admin/scripts.html",
+            request, "global_admin/scripts.html",
             {
                 "request": request,
                 "output": output,
@@ -496,7 +496,7 @@ async def run_global_admin_script(
     except subprocess.TimeoutExpired:
         output = "❌ Script timed out (5 minute limit)"
         return templates.TemplateResponse(
-            "global_admin/scripts.html",
+            request, "global_admin/scripts.html",
             {
                 "request": request,
                 "output": output,
@@ -508,7 +508,7 @@ async def run_global_admin_script(
     except Exception as e:
         output = f"❌ Error: {str(e)}"
         return templates.TemplateResponse(
-            "global_admin/scripts.html",
+            request, "global_admin/scripts.html",
             {
                 "request": request,
                 "output": output,

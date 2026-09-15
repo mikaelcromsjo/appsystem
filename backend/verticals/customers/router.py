@@ -72,7 +72,7 @@ def customers_list(
 
     from verticals.customers import COLUMNS
     return templates.TemplateResponse(
-        "customers/list.html",
+        request, "customers/list.html",
         {"request": request,
          "customers": customers,
          "is_admin": user.admin,
@@ -94,7 +94,7 @@ def customers_rows(
     customers = get_user_customers(db, request, user, json_fields=cms.customer_extras)
     users = db.query(User).all()
     return templates.TemplateResponse(
-        "customers/rows.html",
+        request, "customers/rows.html",
         {"request": request, "customers": customers, "users": users},
     )
 
@@ -375,7 +375,7 @@ def customer_detail(
 
         # Render short template
         return templates.TemplateResponse(
-            "customers/info.html",
+            request, "customers/info.html",
             {
                 "request": request,
                 "customer": customer,
@@ -395,7 +395,7 @@ def customer_detail(
     else:
         # Render full template
         return templates.TemplateResponse(
-            "customers/edit.html",
+            request, "customers/edit.html",
             {
                 "request": request,
                 "customer": customer,
@@ -445,7 +445,7 @@ def customer_filter(
     filter_dict = request.session.get("customer_filters", {})
 
     return templates.TemplateResponse(
-        "customers/filter.html",
+        request, "customers/filter.html",
         {
             "request": request,
             "filter_dict": filter_dict,

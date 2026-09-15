@@ -55,7 +55,7 @@ def products_list(
 
     from verticals.products import COLUMNS
     return templates.TemplateResponse(
-        "products/list.html", {
+        request, "products/list.html", {
             "request": request, "products": products, "is_admin": user.admin, "products_map": cms.products_map, "columns": COLUMNS
         }
     )
@@ -79,7 +79,7 @@ def products_rows(
         query = query.filter(*sql_filters)
     products = query.all()
     return templates.TemplateResponse(
-        "products/rows.html",
+        request, "products/rows.html",
         {"request": request, "products": products, "products_map": cms.products_map, "is_admin": user.admin},
     )
 
@@ -96,7 +96,7 @@ def new_product(
     product = Product.empty()
     first_type_id = next(iter(cms.products), None)
     return templates.TemplateResponse(
-        "products/edit.html", {
+        request, "products/edit.html", {
             "request": request,
             "product": product,
             "editable": True,
@@ -156,7 +156,7 @@ def product_detail(
 
         # Render short template
         return templates.TemplateResponse(
-            "products/info.html",
+            request, "products/info.html",
             {
                 "request": request,
                 "product": product,
@@ -173,7 +173,7 @@ def product_detail(
     else:
         # Render full template
         return templates.TemplateResponse(
-            "products/edit.html", {
+            request, "products/edit.html", {
                 "request": request,
                 "product": product,
                 "editable": True,
@@ -194,11 +194,11 @@ def product_extras_form(
     product_extras = cms.product_extras(type_id)
     if filter:
         return templates.TemplateResponse(
-            "products/_extras_filter.html",
+            request, "products/_extras_filter.html",
             {"request": request, "product_extras": product_extras, "filter_dict": {}},
         )
     return templates.TemplateResponse(
-        "products/_extras_fields.html",
+        request, "products/_extras_fields.html",
         {"request": request, "product_extras": product_extras, "product": None},
     )
 
@@ -332,7 +332,7 @@ def product_filter(
 ):
     filter_dict = request.session.get("product_filters", {})
     return templates.TemplateResponse(
-        "products/filter.html",
+        request, "products/filter.html",
         {
             "request": request,
             "filter_dict": filter_dict,

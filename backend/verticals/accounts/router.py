@@ -26,7 +26,7 @@ def accounts_list(
     from verticals.accounts import COLUMNS
     accounts = db.query(Account).all()
     return templates.TemplateResponse(
-        "accounts/list.html",
+        request, "accounts/list.html",
         {"request": request, "accounts": accounts, "columns": COLUMNS}
     )
 
@@ -39,7 +39,7 @@ def accounts_rows(
 ):
     accounts = db.query(Account).all()
     return templates.TemplateResponse(
-        "accounts/rows.html",
+        request, "accounts/rows.html",
         {"request": request, "accounts": accounts},
     )
 
@@ -62,11 +62,11 @@ def account_detail(
 
     if list == "short":
         return templates.TemplateResponse(
-            "accounts/info.html",
+            request, "accounts/info.html",
             {"request": request, "account": account}
         )
     return templates.TemplateResponse(
-        "accounts/edit.html",
+        request, "accounts/edit.html",
         {"request": request, "account": account}  # Fixed: account only
     )
 
