@@ -242,7 +242,7 @@ async def create_user(
 
 
 @router.get("/", response_class=HTMLResponse)
-async def root(request: Request, user=Depends(get_current_user)):
+async def root(request: Request):
     lang_code = request.cookies.get("lang_code")
     if not lang_code:
         accept_language = request.headers.get("accept-language", "")
@@ -251,7 +251,7 @@ async def root(request: Request, user=Depends(get_current_user)):
 
     if request.session.get("user"):
         return RedirectResponse(url="/dashboard")
-    return templates.TemplateResponse(request, "login.html", {"request": request})
+    return templates.TemplateResponse(request, "landing.html", {"request": request})
 
 
 @router.get("/dashboard", response_class=HTMLResponse)

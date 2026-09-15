@@ -1,0 +1,142 @@
+{% extends "open_base.html" %}
+
+{% block title %}AppSystem{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-20 py-8">
+
+  <!-- Hero -->
+  <section class="text-center space-y-6">
+    <div class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-4 py-1 text-sm font-medium text-indigo-700">
+      Live demo
+    </div>
+    <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight">
+      AppSystem
+    </h1>
+    <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+      One platform for call center, invoicing, and team operations —
+      built so teams see only what their role needs, and new modules
+      snap in without touching the core.
+    </p>
+    <div class="flex items-center justify-center gap-4 pt-2">
+      <a href="/login"
+         class="rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2">
+        Try the live demo
+      </a>
+      <a href="https://github.com/mikaelcromsjo/appsystem"
+         class="rounded-lg border border-gray-300 px-6 py-3 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2">
+        View on GitHub
+      </a>
+    </div>
+  </section>
+
+  <!-- Problem / value -->
+  <section class="grid sm:grid-cols-2 gap-8 items-center">
+    <div>
+      <h2 class="text-2xl font-semibold text-gray-900 mb-3">Support and billing, one shared record</h2>
+      <p class="text-gray-600 leading-relaxed">
+        Most teams run their call center and their invoicing in separate
+        tools with no shared customer record. AppSystem keeps customers,
+        products, calls, and invoices in one place — while each team only
+        ever sees the modules and data their role grants them.
+      </p>
+    </div>
+    <div>
+      <h2 class="text-2xl font-semibold text-gray-900 mb-3">Multi-tenant from the ground up</h2>
+      <p class="text-gray-600 leading-relaxed">
+        Every organization (tenant) gets its own isolated database. A
+        Global Admin oversees all tenants and users from one panel, while
+        each tenant's local admins manage their own teams and roles —
+        without ever seeing another tenant's data.
+      </p>
+    </div>
+  </section>
+
+  <!-- Feature grid -->
+  <section>
+    <h2 class="text-2xl font-semibold text-gray-900 mb-8 text-center">What's inside</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <div class="rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="text-2xl mb-3">📞</div>
+        <h3 class="font-semibold text-gray-900 mb-1">Call Center</h3>
+        <p class="text-sm text-gray-600">Live customer queue with real-time, WebSocket-driven call handling and call logging.</p>
+      </div>
+
+      <div class="rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="text-2xl mb-3">⏰</div>
+        <h3 class="font-semibold text-gray-900 mb-1">Alarms &amp; Reminders</h3>
+        <p class="text-sm text-gray-600">Scheduled reminders tied to customers and products, delivered by a background scheduler.</p>
+      </div>
+
+      <div class="rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="text-2xl mb-3">🧾</div>
+        <h3 class="font-semibold text-gray-900 mb-1">Invoicing &amp; Companies</h3>
+        <p class="text-sm text-gray-600">Sequential invoice numbering, client/company records, and bank account details.</p>
+      </div>
+
+      <div class="rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="text-2xl mb-3">👥</div>
+        <h3 class="font-semibold text-gray-900 mb-1">Customers &amp; Products</h3>
+        <p class="text-sm text-gray-600">A shared customer database and product catalog, with per-customer product status tracking.</p>
+      </div>
+
+      <div class="rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="text-2xl mb-3">🗂️</div>
+        <h3 class="font-semibold text-gray-900 mb-1">Teams &amp; Roles</h3>
+        <p class="text-sm text-gray-600">Staff are organized into teams under an account, with per-module roles — one team can run Call Center + Alarms while another only sees Invoices + Companies.</p>
+      </div>
+
+      <div class="rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="text-2xl mb-3">🔐</div>
+        <h3 class="font-semibold text-gray-900 mb-1">Secure by default</h3>
+        <p class="text-sm text-gray-600">Email + password login with optional two-factor verification via a one-time magic link.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Built to extend -->
+  <section class="rounded-2xl bg-gray-900 text-gray-100 p-8 sm:p-10">
+    <h2 class="text-2xl font-semibold mb-3">Built to extend</h2>
+    <p class="text-gray-300 mb-6 max-w-2xl">
+      Every business module — Customers, Invoices, Call Center — is a
+      self-contained "vertical": its own routes, templates, and
+      permissions. New modules are auto-discovered and added to the
+      navigation automatically. No changes to core application code.
+    </p>
+    <ol class="space-y-2 text-sm text-gray-300 font-mono">
+      <li>1. Add <span class="text-indigo-300">verticals/&lt;name&gt;/__init__.py</span> with a manifest (label, order, routes)</li>
+      <li>2. Add routes and templates for the module</li>
+      <li>3. Restart — the module appears in navigation, with roles applied automatically</li>
+    </ol>
+  </section>
+
+  <!-- Try it -->
+  <section class="text-center rounded-2xl border border-indigo-100 bg-indigo-50 p-8 sm:p-10">
+    <h2 class="text-2xl font-semibold text-gray-900 mb-2">Try it yourself</h2>
+    <p class="text-gray-600 mb-6">This is a live demo tenant, seeded with sample customers, products, calls, and invoices.</p>
+    <div class="inline-flex flex-col items-start gap-1 rounded-lg bg-white border border-gray-200 px-6 py-4 text-left font-mono text-sm text-gray-700 mb-6">
+      <div>email: <span class="text-indigo-700">sales</span></div>
+      <div>password: <span class="text-indigo-700">1234</span></div>
+    </div>
+    <div>
+      <a href="/login"
+         class="rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2">
+        Log in to the demo
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="text-center text-sm text-gray-400 pt-4 space-y-1">
+    <div>Built with FastAPI · HTMX · Alpine.js · SQLite</div>
+    <div>
+      <a href="https://github.com/mikaelcromsjo/appsystem" class="hover:text-gray-600 underline">
+        github.com/mikaelcromsjo/appsystem
+      </a>
+    </div>
+  </footer>
+
+</div>
+{% endblock %}
