@@ -14,7 +14,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 from core.config import SESSION_SECRET
-from core.database import engine, master_engine, init_admin_user
+from core.database import engine, master_engine, init_admin_user, MasterSession
 from core.models.base import Base
 from models.master import MasterBase
 import models.account, models.alarm, models.call, models.team, models.company  # noqa: F401
@@ -63,12 +63,20 @@ async def on_startup():
     Base.metadata.create_all(bind=engine)
     init_admin_user()
     from sqlalchemy.orm import sessionmaker
-    from data.constants import seed_cms_config
+    from data.constants import seed_cms_config, seed_global_cms_config
     _db = sessionmaker(bind=engine)()
     try:
         seed_cms_config(_db)
     finally:
         _db.close()
+    _master_db = MasterSession()
+    try:
+        seed_global_cms_config(_master_db)
+    finally:
+        _master_db.close()
+    # Generate test data for development
+    from scripts.generate_test_data import seed_test_data
+    seed_test_data()
     asyncio.create_task(alarm_scheduler())
 
 

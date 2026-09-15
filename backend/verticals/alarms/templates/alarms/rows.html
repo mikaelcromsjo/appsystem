@@ -1,0 +1,26 @@
+{% for alarm in alarms %}
+<tr hx-get="{{ url_for('alarm_detail', alarm_id=alarm.id) }}?list=short"
+    hx-target="#modal-container-alarms"
+    hx-trigger="click"
+    @click="$store.modal_alarms.open = true"
+    class="cursor-pointer hover:bg-gray-100">
+    <td class="px-2 py-1 border">{{ loop.index }}</td>
+    <td class="px-2 py-1 border">{{ alarm.date | date }}</td>
+    <td class="px-2 py-1 border">{{ alarm.reminder }}</td>
+    <td class="px-2 py-1 border">{{ alarm.customer.first_name }} {{ alarm.customer.last_name }}</td>
+    <td class="px-2 py-1 border">{{ alarm.product.name }}</td>
+    <td class="px-2 py-1 border">{{ alarm.note }}</td>
+    <td class="px-2 py-1 border text-center" @click.stop>
+        <button hx-post="{{ url_for('delete_alarm', alarm_id=alarm.id) }}"
+            hx-on="htmx:afterRequest: showPopup(event); reloadAlarms();"
+            hx-trigger="confirmed"
+            x-confirm="{{'Are you sure you want to delete this record?' | t }}">
+            {{ "Delete" | t }}
+        </button>
+    </td>
+    <td class="px-2 py-1 border text-center" @click.stop>
+        <input data-id="{{ alarm.id }}" type="checkbox" class="alarm-checkbox"
+            x-model="$store.alarms.selected[{{ alarm.id }}]">
+    </td>
+</tr>
+{% endfor %}

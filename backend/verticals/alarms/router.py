@@ -42,12 +42,35 @@ def alarms_list(
     db: Session = Depends(get_db),
     user = Depends(get_current_user),
 ):
-    today = datetime.now(timezone.utc)
-    alarms = (
-        db.query(Alarm)
-        .filter((Alarm.team_id == user.team_id) & (Alarm.date >= today))
-        .all()
-    )
+    # Check if there's an active filter in session
+    filter_data = request.session.get("alarm_filters")
+
+    query = db.query(Alarm).filter(Alarm.team_id == user.team_id)
+
+    # Apply session-based filter if present
+    if filter_data:
+        if filter_data.get("show_all"):
+            # User explicitly requested to show all alarms
+            pass  # No additional filter
+        elif filter_data.get("start") or filter_data.get("end"):
+            start = filter_data.get("start")
+            end = filter_data.get("end")
+            if start and end:
+                start_dt = datetime.fromisoformat(start)
+                end_dt = datetime.fromisoformat(end)
+                query = query.filter(Alarm.date >= start_dt, Alarm.date < end_dt)
+            elif start:
+                start_dt = datetime.fromisoformat(start)
+                query = query.filter(Alarm.date >= start_dt)
+            elif end:
+                end_dt = datetime.fromisoformat(end)
+                query = query.filter(Alarm.date < end_dt)
+    else:
+        # Default filter: show alarms from today onwards (only on first load)
+        today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        query = query.filter(Alarm.date >= today)
+
+    alarms = query.all()
 
     from verticals.alarms import COLUMNS
     return templates.TemplateResponse(
@@ -61,12 +84,35 @@ def alarms_rows(
     db: Session = Depends(get_db),
     user = Depends(get_current_user),
 ):
-    today = datetime.now(timezone.utc)
-    alarms = (
-        db.query(Alarm)
-        .filter((Alarm.team_id == user.team_id) & (Alarm.date >= today))
-        .all()
-    )
+    # Check if there's an active filter in session
+    filter_data = request.session.get("alarm_filters")
+
+    query = db.query(Alarm).filter(Alarm.team_id == user.team_id)
+
+    # Apply session-based filter if present
+    if filter_data:
+        if filter_data.get("show_all"):
+            # User explicitly requested to show all alarms
+            pass  # No additional filter
+        elif filter_data.get("start") or filter_data.get("end"):
+            start = filter_data.get("start")
+            end = filter_data.get("end")
+            if start and end:
+                start_dt = datetime.fromisoformat(start)
+                end_dt = datetime.fromisoformat(end)
+                query = query.filter(Alarm.date >= start_dt, Alarm.date < end_dt)
+            elif start:
+                start_dt = datetime.fromisoformat(start)
+                query = query.filter(Alarm.date >= start_dt)
+            elif end:
+                end_dt = datetime.fromisoformat(end)
+                query = query.filter(Alarm.date < end_dt)
+    else:
+        # Default filter: show alarms from today onwards (only on first load)
+        today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        query = query.filter(Alarm.date >= today)
+
+    alarms = query.all()
     return templates.TemplateResponse(
         "alarms/rows.html",
         {"request": request, "alarms": alarms},
@@ -159,10 +205,29 @@ def delete_alarm(alarm_id: str, db: Session = Depends(get_db)):
     alarm = db.query(Alarm).filter(Alarm.id == alarm_id).first()
     if not alarm:
         raise HTTPException(status_code=404, detail="Alarm not found")
-    
+
     db.delete(alarm)
     db.commit()
     return {"detail": f"Alarm deleted successfully"}
+
+
+# DELETE multiple alarms
+class DeleteSelectedRequest(BaseModel):
+    ids: list[int]
+
+
+@router.post("/delete-selected", name="delete_alarms_selected", response_class=HTMLResponse)
+def delete_alarms_selected(
+    payload: DeleteSelectedRequest,
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user),
+):
+    db.query(Alarm).filter(
+        Alarm.id.in_(payload.ids),
+        Alarm.team_id == user.team_id,
+    ).delete(synchronize_session=False)
+    db.commit()
+    return HTMLResponse("")
 
 
 @router.post("/set_filter", name="set_filter", response_class=HTMLResponse)
@@ -172,32 +237,28 @@ async def set_filter(
 ):
     data = await request.json()
 
-    from datetime import date, datetime, timedelta
-    from sqlalchemy import select
+    from datetime import timedelta
 
     start_str = data.get("alarm_date_filter-start")
     end_str = data.get("alarm_date_filter-end")
 
-    alarm_date_filter_start = (
-        datetime.fromisoformat(start_str) if start_str else None
-    )
-    alarm_date_filter_end = (
-        datetime.fromisoformat(end_str) + timedelta(days=1) if end_str else None
-    )
-
-    query = select(Alarm)
-
-    if alarm_date_filter_start and alarm_date_filter_end:
-        query = query.where(
-            Alarm.date >= alarm_date_filter_start,
-            Alarm.date < alarm_date_filter_end
+    # If submitted with empty dates, set marker to show all
+    if not start_str and not end_str:
+        request.session["alarm_filters"] = {"show_all": True}
+    else:
+        alarm_date_filter_start = (
+            datetime.fromisoformat(start_str) if start_str else None
         )
-    elif alarm_date_filter_start:
-        query = query.where(Alarm.date >= alarm_date_filter_start)
-    elif alarm_date_filter_end:
-        query = query.where(Alarm.date <= alarm_date_filter_end)
+        alarm_date_filter_end = (
+            datetime.fromisoformat(end_str) + timedelta(days=1) if end_str else None
+        )
 
-    alarms = db.execute(query).scalars().all()
+        # Store filter in session
+        request.session["alarm_filters"] = {
+            "start": alarm_date_filter_start.isoformat() if alarm_date_filter_start else None,
+            "end": alarm_date_filter_end.isoformat() if alarm_date_filter_end else None,
+        }
+
     response = HTMLResponse("")
     response.headers["HX-Trigger"] = "alarmsRowsReload"
     return response

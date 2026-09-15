@@ -20,6 +20,7 @@ class User(BaseMixin, Base):
     password_hash = Column(String, nullable=True)   # kept for migration; auth is in GlobalUser
     global_user_id = Column(Integer, nullable=True)  # references master.global_users.id (no FK across DBs)
     admin = Column(Integer, default=0)
+    roles = Column(MutableDict.as_mutable(JSON), default=dict)  # {"vertical_slug": bitmask}
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     team = relationship("Team")
     extra = Column(MutableDict.as_mutable(JSON), default=dict)
@@ -33,6 +34,7 @@ class User(BaseMixin, Base):
 
 class UserUpdate(BaseModel):
     team_id: Optional[int] = None
+    roles: Optional[Dict[str, int]] = None
     extra: Optional[Dict[str, Any]] = None
 
     class Config:

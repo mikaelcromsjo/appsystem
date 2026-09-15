@@ -360,6 +360,18 @@ from models.config import TenantConfig
 
 # --- User Management ---
 
+def _get_users_context(db: Session, include_role_defs: bool = True) -> dict:
+    """Helper to get context for users.html template."""
+    from core.loader import get_nav_items
+    users = db.query(User).order_by(User.id).all()
+    teams = db.query(Team).order_by(Team.name).all()
+    context = {"users": users, "teams": teams}
+    if include_role_defs:
+        nav_items = get_nav_items()
+        context["verticals_with_roles"] = [v for v in nav_items if v.get("role_defs")]
+    return context
+
+
 @router.get("/users", response_class=HTMLResponse, name="admin_users")
 def admin_users(
     request: Request,
@@ -368,11 +380,10 @@ def admin_users(
 ):
     if user.admin <= 0:
         return HTMLResponse("Access denied", status_code=403)
-    users = db.query(User).order_by(User.id).all()
-    teams = db.query(Team).order_by(Team.name).all()
+    ctx = _get_users_context(db)
     return templates.TemplateResponse(
         "admin/users.html",
-        {"request": request, "users": users, "teams": teams},
+        {"request": request, **ctx},
     )
 
 
@@ -394,11 +405,10 @@ async def admin_create_user(
 
     existing_global = master_db.query(GlobalUser).filter_by(email=email).first()
     if existing_global:
-        users = db.query(User).order_by(User.id).all()
+        ctx = _get_users_context(db)
         return templates.TemplateResponse(
             "admin/users.html",
-            {"request": request, "users": users, "teams": teams,
-             "error": f"Email '{email}' is already registered."},
+            {"request": request, **ctx, "error": f"Email '{email}' is already registered."},
         )
 
     # Resolve team: use given team_id or fall back to DEFAULT
@@ -426,10 +436,10 @@ async def admin_create_user(
     db.add(new_user)
     db.commit()
 
-    users = db.query(User).order_by(User.id).all()
+    ctx = _get_users_context(db)
     return templates.TemplateResponse(
         "admin/users.html",
-        {"request": request, "users": users, "teams": teams, "saved": True},
+        {"request": request, **ctx, "saved": True},
     )
 
 
@@ -445,33 +455,28 @@ async def admin_create_team(
 
     name = name.strip()
     if not name:
-        users = db.query(User).order_by(User.id).all()
-        teams = db.query(Team).order_by(Team.name).all()
+        ctx = _get_users_context(db)
         return templates.TemplateResponse(
             "admin/users.html",
-            {"request": request, "users": users, "teams": teams,
-             "error": "Team name cannot be empty."},
+            {"request": request, **ctx, "error": "Team name cannot be empty."},
         )
 
     existing_team = db.query(Team).filter_by(name=name).first()
     if existing_team:
-        users = db.query(User).order_by(User.id).all()
-        teams = db.query(Team).order_by(Team.name).all()
+        ctx = _get_users_context(db)
         return templates.TemplateResponse(
             "admin/users.html",
-            {"request": request, "users": users, "teams": teams,
-             "error": f"Team '{name}' already exists."},
+            {"request": request, **ctx, "error": f"Team '{name}' already exists."},
         )
 
     team = Team(name=name)
     db.add(team)
     db.commit()
 
-    users = db.query(User).order_by(User.id).all()
-    teams = db.query(Team).order_by(Team.name).all()
+    ctx = _get_users_context(db)
     return templates.TemplateResponse(
         "admin/users.html",
-        {"request": request, "users": users, "teams": teams, "saved": True},
+        {"request": request, **ctx, "saved": True},
     )
 
 
@@ -488,23 +493,210 @@ async def admin_update_user_team(
 
     target_user = db.query(User).filter_by(id=user_id).first()
     if not target_user:
-        users = db.query(User).order_by(User.id).all()
-        teams = db.query(Team).order_by(Team.name).all()
+        ctx = _get_users_context(db)
         return templates.TemplateResponse(
             "admin/users.html",
-            {"request": request, "users": users, "teams": teams,
-             "error": "User not found."},
+            {"request": request, **ctx, "error": "User not found."},
         )
 
     resolved_team_id = int(team_id) if team_id and team_id != "" else None
     target_user.team_id = resolved_team_id
     db.commit()
 
-    users = db.query(User).order_by(User.id).all()
-    teams = db.query(Team).order_by(Team.name).all()
+    ctx = _get_users_context(db)
     return templates.TemplateResponse(
         "admin/users.html",
-        {"request": request, "users": users, "teams": teams, "saved": True},
+        {"request": request, **ctx, "saved": True},
+    )
+
+
+@router.get("/users/{user_id}/detail", response_class=HTMLResponse, name="admin_user_detail")
+def admin_user_detail(
+    request: Request,
+    user_id: int,
+    list: Optional[str] = None,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    if user.admin <= 0:
+        return HTMLResponse("Access denied", status_code=403)
+    from core.loader import get_nav_items
+    target_user = db.query(User).filter_by(id=user_id).first()
+    if not target_user:
+        return HTMLResponse("User not found", status_code=404)
+    teams = db.query(Team).order_by(Team.name).all()
+    nav_items = get_nav_items()
+    verticals_with_roles = [v for v in nav_items if v.get("role_defs")]
+    template = "admin/user_info.html" if list == "short" else "admin/user_edit.html"
+    return templates.TemplateResponse(template, {
+        "request": request,
+        "u": target_user,
+        "teams": teams,
+        "verticals_with_roles": verticals_with_roles,
+    })
+
+
+@router.post("/users/{user_id}/update", response_class=HTMLResponse, name="admin_update_user")
+async def admin_update_user(
+    user_id: int,
+    team_id: Optional[str] = Form(None),
+    admin: Optional[str] = Form(None),
+    roles_json: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    if user.admin <= 0:
+        return HTMLResponse("Access denied", status_code=403)
+    target_user = db.query(User).filter_by(id=user_id).first()
+    if not target_user:
+        return HTMLResponse("User not found", status_code=404)
+
+    target_user.team_id = int(team_id) if team_id else None
+    target_user.admin = int(admin) if admin else 0
+
+    if roles_json:
+        try:
+            import json as _json
+            roles = _json.loads(roles_json)
+            if isinstance(roles, dict):
+                target_user.roles = {k: int(v) for k, v in roles.items()}
+        except (ValueError, TypeError):
+            pass
+
+    db.commit()
+    return HTMLResponse("", status_code=200)
+
+
+@router.post("/users/{user_id}/set-admin", response_class=HTMLResponse, name="admin_update_user_admin")
+async def admin_update_user_admin(
+    request: Request,
+    user_id: int,
+    is_admin: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    if user.admin <= 0:
+        return HTMLResponse("Access denied", status_code=403)
+
+    target_user = db.query(User).filter_by(id=user_id).first()
+    if not target_user:
+        ctx = _get_users_context(db)
+        return templates.TemplateResponse(
+            "admin/users.html",
+            {"request": request, **ctx, "error": "User not found."},
+        )
+
+    target_user.admin = 1 if is_admin == "on" else 0
+    db.commit()
+
+    ctx = _get_users_context(db)
+    return templates.TemplateResponse(
+        "admin/users.html",
+        {"request": request, **ctx},
+    )
+
+
+@router.post("/users/{user_id}/remove-role", response_class=HTMLResponse, name="admin_remove_user_role")
+async def admin_remove_user_role(
+    request: Request,
+    user_id: int,
+    vertical: str = Form(...),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    if user.admin <= 0:
+        return HTMLResponse("Access denied", status_code=403)
+
+    target_user = db.query(User).filter_by(id=user_id).first()
+    if not target_user:
+        ctx = _get_users_context(db)
+        return templates.TemplateResponse("admin/users.html", {"request": request, **ctx})
+
+    roles = dict(target_user.roles or {})
+    roles.pop(vertical, None)
+    target_user.roles = roles
+    db.commit()
+
+    ctx = _get_users_context(db)
+    return templates.TemplateResponse("admin/users.html", {"request": request, **ctx})
+
+
+@router.post("/users/{user_id}/add-role", response_class=HTMLResponse, name="admin_add_user_role")
+async def admin_add_user_role(
+    request: Request,
+    user_id: int,
+    vertical: str = Form(...),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    if user.admin <= 0:
+        return HTMLResponse("Access denied", status_code=403)
+
+    target_user = db.query(User).filter_by(id=user_id).first()
+    if not target_user:
+        ctx = _get_users_context(db)
+        return templates.TemplateResponse("admin/users.html", {"request": request, **ctx})
+
+    from core.loader import get_nav_items
+    nav_items = get_nav_items()
+    vertical_def = next((v for v in nav_items if v.get("slug") == vertical and v.get("role_defs")), None)
+
+    roles = dict(target_user.roles or {})
+    if vertical_def:
+        full_mask = 0
+        for bit in vertical_def["role_defs"].values():
+            full_mask |= bit
+        roles[vertical] = full_mask
+    else:
+        roles[vertical] = 1
+
+    target_user.roles = roles
+    db.commit()
+
+    ctx = _get_users_context(db)
+    return templates.TemplateResponse("admin/users.html", {"request": request, **ctx})
+
+
+@router.post("/users/{user_id}/update-roles", response_class=HTMLResponse, name="admin_update_user_roles")
+async def admin_update_user_roles(
+    request: Request,
+    user_id: int,
+    roles_json: str = Form(...),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    if user.admin <= 0:
+        return HTMLResponse("Access denied", status_code=403)
+
+    target_user = db.query(User).filter_by(id=user_id).first()
+    if not target_user:
+        ctx = _get_users_context(db)
+        return templates.TemplateResponse(
+            "admin/users.html",
+            {"request": request, **ctx, "error": "User not found."},
+        )
+
+    try:
+        import json
+        roles = json.loads(roles_json)
+        # Ensure it's a dict with string keys and int values
+        if not isinstance(roles, dict):
+            raise ValueError("Roles must be a JSON object")
+        roles = {k: int(v) for k, v in roles.items()}
+    except (json.JSONDecodeError, ValueError, TypeError) as e:
+        ctx = _get_users_context(db)
+        return templates.TemplateResponse(
+            "admin/users.html",
+            {"request": request, **ctx, "error": f"Invalid roles JSON: {e}"},
+        )
+
+    target_user.roles = roles
+    db.commit()
+
+    ctx = _get_users_context(db)
+    return templates.TemplateResponse(
+        "admin/users.html",
+        {"request": request, **ctx, "saved": True},
     )
 
 

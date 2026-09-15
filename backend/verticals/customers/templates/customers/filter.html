@@ -51,16 +51,6 @@
         </select>
     </div>
 
-    <!-- Code Name (Boolean) -->
-    <div>
-        <label class="block font-semibold">{{ "Code Name" | t }}</label>
-        <select name="code_name" class="border p-1 mt-1">
-            <option value="">{{ "Any" | t }}</option>
-            <option value="true" {% if filter_dict.get('code_name') %}selected{% endif %}>{{ "True" | t }}</option>
-            <option value="false" {% if filter_dict.get('code_name') == 'false' %}selected{% endif %}>{{ "False" | t }}</option>
-        </select>
-    </div>
-
     <!-- Email -->
     <div>
         <label class="block font-semibold">{{ "Email" | t }}</label>
@@ -205,24 +195,39 @@
         </select>
     </div>
 
-    <!-- Boolean Preferences -->
-    {% for field, label in [
-        ('controlled', 'Controlled'),
-        ('filter_a', 'Fester'),
-        ('filter_b', 'AW'),
-        ('filter_c', 'Föreläsningar'),
-        ('filter_d', 'Aktivism'),
-        ('filter_e', 'Konferenser'),
-        ('filter_f', 'Prenumeration'),
-        ('filter_g', 'Medlemskap')
-    ] %}
+    {% for item in c_filters %}
     <div>
-        <label class="block font-semibold">{{ label }}</label>
-        <select name="{{ field }}" class="border p-1 mt-1">
-            <option value="">{{ "Any" | t }} </option>
-            <option value="true" {% if filter_dict.get(field) == 'true' %}selected{% endif %}>{{ "True" | t }}</option>
-            <option value="false" {% if filter_dict.get(field) == 'false' %}selected{% endif %}>{{ "False" | t }}</option>
+        <label class="block font-semibold">{{ item.name }}</label>
+        <select name="{{ item.id }}" class="border p-1 mt-1">
+            <option value="">{{ "Any" | t }}</option>
+            <option value="true" {% if filter_dict.get(item.id) == 'true' %}selected{% endif %}>{{ "True" | t }}</option>
+            <option value="false" {% if filter_dict.get(item.id) == 'false' %}selected{% endif %}>{{ "False" | t }}</option>
         </select>
+    </div>
+    {% endfor %}
+
+    {% for key, meta in customer_extras.items() if meta.get('filter') %}
+    <div>
+        <label class="block font-semibold">{{ meta.label }}</label>
+        {% if meta.type == "bool" %}
+        <select name="extra.{{ key }}" class="border p-1 mt-1">
+            <option value="">{{ "Any" | t }}</option>
+            <option value="true" {% if filter_dict.get('extra.' ~ key) == 'true' %}selected{% endif %}>{{ "True" | t }}</option>
+            <option value="false" {% if filter_dict.get('extra.' ~ key) == 'false' %}selected{% endif %}>{{ "False" | t }}</option>
+        </select>
+        {% elif meta.type == "select" %}
+        <select name="extra.{{ key }}" multiple class="border p-1 w-full">
+            {% for opt_key, opt_label in meta.options.items() %}
+              <option value="{{ opt_key }}" {% if opt_key in filter_dict.get('extra.' ~ key, []) %}selected{% endif %}>{{ opt_label }}</option>
+            {% endfor %}
+        </select>
+        {% else %}
+        <input type="text" name="extra.{{ key }}" value="{{ filter_dict.get('extra.' ~ key, '') }}" class="border p-1 w-full"/>
+        <select name="extra.{{ key }}_type" class="border p-1 mt-1">
+            <option value="like">{{ "Contains" | t }}</option>
+            <option value="exact">{{ "Exact" | t }}</option>
+        </select>
+        {% endif %}
     </div>
     {% endfor %}
 

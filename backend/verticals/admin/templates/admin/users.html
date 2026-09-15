@@ -1,4 +1,4 @@
-<div x-data="{ showCreate: false }">
+<div x-data="{ showCreate: false, selectedRow: 0 }">
 
   <div class="flex items-center gap-3 mb-4">
     <button
@@ -90,37 +90,116 @@
           <th class="w-[30%] px-2 py-1 border">{{ "Email" | t }}</th>
           <th class="w-[25%] px-2 py-1 border">{{ "Team" | t }}</th>
           <th class="w-[15%] px-2 py-1 border text-center">{{ "Admin" | t }}</th>
+          <th class="w-[20%] px-2 py-1 border text-center">{{ "Roles" | t }}</th>
           <th class="w-[10%] px-2 py-1 border text-center">{{ "Actions" | t }}</th>
         </tr>
       </thead>
       <tbody>
         {% for u in users %}
-        <tr class="hover:bg-gray-50" x-data="{ editTeam: false }">
-          <td class="px-2 py-1 border text-sm">{{ u.id }}</td>
-          <td class="px-2 py-1 border text-sm">{{ u.username }}</td>
-          <td class="px-2 py-1 border text-sm">
-            <div x-show="!editTeam">{{ u.team.name if u.team else '—' }}</div>
-            <form x-show="editTeam" @submit.prevent
-              hx-post="{{ url_for('admin_update_user_team', user_id=u.id) }}"
-              hx-target="#admin_content"
-              hx-swap="innerHTML"
-              class="flex gap-2">
-              <select name="team_id" required
-                class="border rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <option value="">— None —</option>
+        <tr
+          :class="{ 'bg-blue-50': selectedRow === {{ loop.index }}, 'hover:bg-gray-50': selectedRow !== {{ loop.index }} }"
+          @click="selectedRow = {{ loop.index }}; $store.modal_admin.open = true"
+          hx-get="{{ url_for('admin_user_detail', user_id=u.id) }}?list=short"
+          hx-target="#modal-container-admin"
+          hx-trigger="click"
+          class="cursor-pointer align-top">
+
+          <td class="px-2 py-2 border text-sm">{{ u.id }}</td>
+          <td class="px-2 py-2 border text-sm">{{ u.username }}</td>
+
+          <!-- Team: pill with ✕ to remove, select to assign -->
+          <td class="px-2 py-2 border text-sm" @click.stop>
+            <div class="flex flex-wrap gap-1 mb-1">
+              {% if u.team %}
+              <form hx-post="{{ url_for('admin_update_user_team', user_id=u.id) }}"
+                hx-target="#admin_content" hx-swap="innerHTML" class="inline">
+                <input type="hidden" name="team_id" value="">
+                <button type="submit"
+                  class="px-2 py-0.5 bg-blue-100 border border-blue-300 rounded text-xs hover:bg-red-100 hover:border-red-300"
+                  title="{{ 'Click to remove' | t }}">
+                  {{ u.team.name }} ✕
+                </button>
+              </form>
+              {% endif %}
+            </div>
+            <form hx-post="{{ url_for('admin_update_user_team', user_id=u.id) }}"
+              hx-target="#admin_content" hx-swap="innerHTML"
+              class="flex gap-1">
+              <select name="team_id" class="border rounded px-1 py-0.5 text-xs">
+                <option value="">— {{ "None" | t }} —</option>
                 {% for team in teams %}
-                <option value="{{ team.id }}" {% if u.team_id == team.id %}selected{% endif %}>{{ team.name }}</option>
+                {% if u.team_id != team.id %}
+                <option value="{{ team.id }}">{{ team.name }}</option>
+                {% endif %}
                 {% endfor %}
               </select>
-              <button type="submit" class="text-green-600 hover:text-green-700 font-bold">✔</button>
-              <button type="button" @click="editTeam = false" class="text-red-600 hover:text-red-700">✕</button>
+              <button type="submit"
+                class="px-2 py-0.5 border rounded bg-gray-100 hover:bg-gray-200 text-xs">
+                {{ "Set" | t }}
+              </button>
             </form>
           </td>
-          <td class="px-2 py-1 border text-center text-sm">
-            {% if u.admin %}<span class="text-green-600 font-bold">✔</span>{% else %}<span class="text-gray-400">–</span>{% endif %}
+
+          <!-- Admin: checkbox auto-submit -->
+          <td class="px-2 py-2 border text-center" @click.stop>
+            <form hx-post="{{ url_for('admin_update_user_admin', user_id=u.id) }}"
+              hx-target="#admin_content" hx-swap="innerHTML">
+              <input type="hidden" name="is_admin" value="">
+              <input type="checkbox" name="is_admin" value="on"
+                {% if u.admin %}checked{% endif %}
+                class="w-4 h-4"
+                @change="$el.closest('form').requestSubmit()">
+            </form>
           </td>
-          <td class="px-2 py-1 border text-center text-sm">
-            <button @click="editTeam = true" class="text-blue-600 hover:text-blue-700 text-xs px-2 py-1">{{ "Edit" | t }}</button>
+
+          <!-- Roles: pills with ✕ to remove, select to add -->
+          <td class="px-2 py-2 border" @click.stop>
+            <div class="flex flex-wrap gap-1 mb-1">
+              {% for vertical_slug, bitmask in (u.roles or {}).items() %}
+              <form hx-post="{{ url_for('admin_remove_user_role', user_id=u.id) }}"
+                hx-target="#admin_content" hx-swap="innerHTML" class="inline">
+                <input type="hidden" name="vertical" value="{{ vertical_slug }}">
+                <button type="submit"
+                  class="px-2 py-0.5 bg-blue-100 border border-blue-300 rounded text-xs hover:bg-red-100 hover:border-red-300"
+                  title="{{ 'Click to remove' | t }}">
+                  {{ vertical_slug }} ✕
+                </button>
+              </form>
+              {% endfor %}
+            </div>
+            {% set assigned_verticals = (u.roles or {}).keys() | list %}
+            {% set available = [] %}
+            {% for v in verticals_with_roles %}
+              {% if v.slug not in assigned_verticals %}
+                {% set _ = available.append(v) %}
+              {% endif %}
+            {% endfor %}
+            {% if available %}
+            <form hx-post="{{ url_for('admin_add_user_role', user_id=u.id) }}"
+              hx-target="#admin_content" hx-swap="innerHTML"
+              class="flex gap-1">
+              <select name="vertical" class="border rounded px-1 py-0.5 text-xs">
+                {% for v in available %}
+                <option value="{{ v.slug }}">{{ v.label }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit"
+                class="px-2 py-0.5 border rounded bg-gray-100 hover:bg-gray-200 text-xs">
+                {{ "Add" | t }}
+              </button>
+            </form>
+            {% endif %}
+          </td>
+
+          <!-- Actions: pen (no box) → full edit modal -->
+          <td class="px-2 py-2 border text-center" @click.stop>
+            <button
+              hx-get="{{ url_for('admin_user_detail', user_id=u.id) }}"
+              hx-target="#modal-container-admin"
+              hx-swap="innerHTML"
+              @click="$store.modal_admin.open = true"
+              class="text-gray-500 hover:text-blue-600 text-base"
+              title="{{ 'Edit' | t }}">✎</button>
           </td>
         </tr>
         {% endfor %}

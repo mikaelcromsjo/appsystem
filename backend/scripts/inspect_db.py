@@ -10,9 +10,17 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
+import importlib
+import pkgutil
+import models
+
 from core.database import SessionLocal
-from models.models import Base
-from core.models.models import User
+from core.models.base import Base
+
+# Dynamically import all model modules to register them with Base
+for importer, modname, ispkg in pkgutil.iter_modules(models.__path__):
+    if not modname.startswith("_"):
+        importlib.import_module(f"models.{modname}")
 
 # Build a name → class lookup from all mapped models
 MODEL_MAP = {

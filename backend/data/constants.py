@@ -17,11 +17,13 @@ def _load_defaults() -> dict:
 
 _defaults = _load_defaults()
 
-categories    = _defaults["categories"]
-products      = _defaults["products"]
-organisations = _defaults["organisations"]
-filters       = _defaults["filters"]
-personalities = _defaults["personalities"]
+categories      = _defaults["categories"]
+products        = _defaults["products"]
+organisations   = _defaults["organisations"]
+filters         = _defaults["filters"]
+personalities   = _defaults["personalities"]
+customer_extras = _defaults.get("customer_extras", {})
+product_extras  = _defaults.get("product_extras", {})
 
 
 # --- Derived lookup maps ---
@@ -87,12 +89,22 @@ class CmsConfig:
     organisations_map: dict
     filters_map: dict
     personalities_map: dict
+    customer_extras: dict
+    global_product_extras: dict
+
+    def product_extras(self, type_id: str | None) -> dict:
+        """Global extras merged with type-specific extras (type wins on collision)."""
+        type_extra = {}
+        if type_id:
+            prod = self.products.get(type_id)
+            if prod:
+                type_extra = prod.get("extra", {}) or {}
+        return {**self.global_product_extras, **type_extra}
 
 
 def get_cms_config(db=None) -> CmsConfig:
     """FastAPI dependency — inject as: cms: CmsConfig = Depends(get_cms_config)"""
     if db is None:
-        from core.database import get_db
         raise RuntimeError("get_cms_config requires a db session via Depends(get_cms_config)")
     cfg = load_cms_config(db)
     maps = _build_maps(cfg)
@@ -102,6 +114,8 @@ def get_cms_config(db=None) -> CmsConfig:
         organisations=cfg["organisations"],
         filters=cfg["filters"],
         personalities=cfg["personalities"],
+        customer_extras=cfg.get("customer_extras", {}),
+        global_product_extras=cfg.get("product_extras", {}),
         **maps,
     )
 
@@ -119,6 +133,8 @@ def _make_dependency():
             organisations=cfg["organisations"],
             filters=cfg["filters"],
             personalities=cfg["personalities"],
+            customer_extras=cfg.get("customer_extras", {}),
+            global_product_extras=cfg.get("product_extras", {}),
             **maps,
         )
     return _dep
@@ -126,10 +142,35 @@ def _make_dependency():
 get_cms_config = _make_dependency()
 
 
-def seed_cms_config(db) -> None:
-    """Insert default CMS config into tenant DB if not already present."""
+def seed_cms_config(db, cfg: dict | None = None) -> None:
+    """Insert CMS config into tenant DB if not already present.
+    Uses cfg if provided, else _defaults."""
     from models.config import TenantConfig
     exists = db.query(TenantConfig).filter_by(key=CMS_CONFIG_KEY).first()
     if not exists:
-        db.add(TenantConfig(key=CMS_CONFIG_KEY, value=json.dumps(_defaults, ensure_ascii=False)))
+        data = cfg if cfg is not None else _defaults
+        db.add(TenantConfig(key=CMS_CONFIG_KEY, value=json.dumps(data, ensure_ascii=False)))
         db.commit()
+
+
+# --- Global CMS config (master DB) ---
+
+GLOBAL_CMS_CONFIG_KEY = "global_cms"
+
+
+def load_global_cms_config(master_db) -> dict:
+    """Load CMS defaults from master DB. Falls back to static _defaults if not seeded yet."""
+    from models.master import GlobalConfig
+    row = master_db.query(GlobalConfig).filter_by(key=GLOBAL_CMS_CONFIG_KEY).first()
+    if row is None:
+        return _defaults
+    return json.loads(row.value)
+
+
+def seed_global_cms_config(master_db) -> None:
+    """Insert default CMS config into master DB if not already present."""
+    from models.master import GlobalConfig
+    exists = master_db.query(GlobalConfig).filter_by(key=GLOBAL_CMS_CONFIG_KEY).first()
+    if not exists:
+        master_db.add(GlobalConfig(key=GLOBAL_CMS_CONFIG_KEY, value=json.dumps(_defaults, ensure_ascii=False)))
+        master_db.commit()

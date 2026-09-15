@@ -1,5 +1,7 @@
 # Import Architecture
 
+**Load: always at session start**
+
 Strict layered hierarchy — lower layers never import from higher layers.
 
 ```
@@ -59,9 +61,4 @@ main.py                    # app factory — wires everything
 
 `get_db(request)` reads `request.session["tenant_db_url"]` to route to the correct tenant DB. Routers that need the master DB use `get_master_db()` instead.
 
-## Adding a new entity
-
-1. `models/<entity>.py` — `Base` from `core.models.base`, `BaseMixin` from `models.base`
-2. Add re-export to `models/models.py`
-3. `routers/<entity>.py` with `APIRouter`
-4. Include router in `main.py`
+See `ADDING_ENTITY.md` for the full checklist when creating new models and routers.

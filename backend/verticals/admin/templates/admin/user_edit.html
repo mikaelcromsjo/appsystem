@@ -1,0 +1,71 @@
+<div x-init="$store.modal_admin.title = '{{ "Edit User" | t }}: {{ u.username }}'"></div>
+<div x-init="$store.modal_admin.submit = '{{ "Save" | t }}'"></div>
+
+<form
+  hx-post="{{ url_for('admin_update_user', user_id=u.id) }}"
+  hx-swap="none"
+  @submit="
+    const roles = {};
+    document.querySelectorAll('[data-role-checkbox-edit]:checked').forEach(cb => {
+      const parts = cb.dataset.roleKey.split('_');
+      const vertical = parts.slice(0, -1).join('_');
+      const bit = parseInt(parts[parts.length - 1]);
+      if (!roles[vertical]) roles[vertical] = 0;
+      roles[vertical] |= bit;
+    });
+    document.getElementById('roles_json_edit').value = JSON.stringify(roles);
+  "
+  x-init="
+    $el.addEventListener('htmx:afterRequest', (event) => {
+      if (event.detail.xhr.status === 200) {
+        $store.modal_admin.open = false;
+        htmx.ajax('GET', '{{ url_for('admin_users') }}', {target:'#admin_content', swap:'innerHTML'});
+      }
+    })
+  ">
+
+  <!-- Team -->
+  <div class="mb-3">
+    <label class="block font-semibold text-sm mb-1">{{ "Team" | t }}</label>
+    <select name="team_id" class="border p-1 w-full">
+      <option value="">— {{ "None" | t }} —</option>
+      {% for team in teams %}
+        <option value="{{ team.id }}" {% if u.team_id == team.id %}selected{% endif %}>{{ team.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- Admin -->
+  <div class="mb-3">
+    <label class="block font-semibold text-sm mb-1">{{ "Admin" | t }}</label>
+    <label class="flex items-center gap-2">
+      <input type="hidden" name="admin" value="0">
+      <input type="checkbox" name="admin" value="1" {% if u.admin %}checked{% endif %} class="w-4 h-4">
+      <span class="text-sm">{{ "Admin access" | t }}</span>
+    </label>
+  </div>
+
+  <!-- Roles -->
+  <div class="mb-3">
+    <label class="block font-semibold text-sm mb-2">{{ "Roles" | t }}</label>
+    <div class="space-y-3">
+      {% for vertical in verticals_with_roles %}
+      <div class="p-2 border rounded">
+        <label class="font-medium text-xs block mb-1">{{ vertical.label }}</label>
+        {% for role_name, role_bit in vertical.role_defs.items() %}
+        <div class="flex items-center">
+          <input type="checkbox"
+            data-role-checkbox-edit
+            data-role-key="{{ vertical.slug }}_{{ role_bit }}"
+            {% if u.roles and (u.roles.get(vertical.slug, 0) | bitand(role_bit)) %}checked{% endif %}
+            class="w-4 h-4">
+          <label class="ml-2 text-xs">{{ role_name }}</label>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+      <input type="hidden" name="roles_json" id="roles_json_edit" value="{{ u.roles | tojson }}">
+    </div>
+  </div>
+
+</form>

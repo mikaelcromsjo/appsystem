@@ -1,0 +1,61 @@
+{% if product_extras %}
+<fieldset class="mb-2 border p-2" id="product-extras-fieldset">
+  <legend class="font-bold">{{ "Extras" | t }}</legend>
+
+  {% for key, meta in product_extras.items() %}
+    {% set val = product.extra.get(key) if product and product.extra else None %}
+
+    {% if meta.type == "bool" %}
+    <label class="flex items-center gap-1 mb-1">
+      <input type="hidden" name="extra.{{ key }}" value="false">
+      <input type="checkbox" name="extra.{{ key }}" value="true"
+             {% if val %}checked{% endif %}/>
+      {{ meta.label }}
+    </label>
+
+    {% elif meta.type == "password" %}
+    <div class="mb-2">
+      <label class="block text-sm">{{ meta.label }}</label>
+      <input type="password" name="extra.{{ key }}" value="{{ val or '' }}"
+             class="border p-1 w-full"/>
+    </div>
+
+    {% elif meta.type == "number" %}
+    <div class="mb-2">
+      <label class="block text-sm">{{ meta.label }}</label>
+      <input type="number" name="extra.{{ key }}" value="{{ val or '' }}"
+             class="border p-1 w-full"/>
+    </div>
+
+    {% elif meta.type in ("date", "datetime") %}
+    <div class="mb-2">
+      <label class="block text-sm">{{ meta.label }}</label>
+      <input type="{{ 'datetime-local' if meta.type == 'datetime' else 'date' }}"
+             name="extra.{{ key }}" value="{{ val or '' }}"
+             class="border p-1 w-full"/>
+    </div>
+
+    {% elif meta.type == "select" %}
+    <div class="mb-2">
+      <label class="block text-sm">{{ meta.label }}</label>
+      <select name="extra.{{ key }}" class="border p-1 w-full">
+        <option value="">{{ "Select..." | t }}</option>
+        {% for opt_key, opt_label in meta.options.items() %}
+          <option value="{{ opt_key }}" {% if val == opt_key %}selected{% endif %}>
+            {{ opt_label }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {% else %}
+    <div class="mb-2">
+      <label class="block text-sm">{{ meta.label }}</label>
+      <input type="text" name="extra.{{ key }}" value="{{ val or '' }}"
+             class="border p-1 w-full"/>
+    </div>
+    {% endif %}
+
+  {% endfor %}
+</fieldset>
+{% endif %}

@@ -1,0 +1,24 @@
+<div x-init="$store.modal_admin.title = '{{ u.username }}'"></div>
+<div x-init="$store.modal_admin.submit = ''"></div>
+
+<div class="space-y-2 text-sm">
+  <div><strong>ID:</strong> {{ u.id }}</div>
+  <div><strong>{{ "Email" | t }}:</strong> {{ u.username }}</div>
+  <div><strong>{{ "Team" | t }}:</strong> {{ u.team.name if u.team else '—' }}</div>
+  <div><strong>{{ "Admin" | t }}:</strong>
+    {% if u.admin %}<span class="text-green-600 font-bold">{{ "Yes" | t }}</span>
+    {% else %}<span class="text-gray-400">{{ "No" | t }}</span>{% endif %}
+  </div>
+  {% if u.roles and u.roles|length > 0 %}
+  <div>
+    <strong>{{ "Roles" | t }}:</strong>
+    <div class="flex flex-wrap gap-1 mt-1">
+      {% for vertical_slug, bitmask in u.roles.items() %}
+        <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">{{ vertical_slug }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div><strong>{{ "Roles" | t }}:</strong> <span class="text-gray-400">—</span></div>
+  {% endif %}
+</div>

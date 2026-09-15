@@ -55,7 +55,7 @@ def get_nav_items() -> list[dict]:
     """
     Return nav descriptors for base.html.
 
-    Each dict: slug, label, hx_endpoint, content_div_id, admin_only.
+    Each dict: slug, label, hx_endpoint, content_div_id, admin_only, role_defs.
     """
     return [
         {
@@ -65,6 +65,7 @@ def get_nav_items() -> list[dict]:
             "content_div_id": v.content_div_id,
             "admin_only": getattr(v, "admin_only", False),
             "superadmin_only": getattr(v, "superadmin_only", False),
+            "role_defs": getattr(v, "role_defs", {}),
         }
         for v in discover()
     ]

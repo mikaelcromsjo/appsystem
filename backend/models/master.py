@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import declarative_base
 
 from models.user import pwd_context
@@ -57,3 +57,12 @@ class LoginToken(MasterBase):
     def is_valid(self) -> bool:
         expires = self.expires_at.replace(tzinfo=timezone.utc) if self.expires_at.tzinfo is None else self.expires_at
         return not self.used and datetime.now(timezone.utc) < expires
+
+
+class GlobalConfig(MasterBase):
+    """Global CMS configuration defaults (categories, products, filters, etc).
+    Stored in master DB; new tenants copy these to their tenant_config."""
+    __tablename__ = "global_config"
+
+    key = Column(String, primary_key=True)
+    value = Column(Text, nullable=False)

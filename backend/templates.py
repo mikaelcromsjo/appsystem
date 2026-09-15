@@ -50,3 +50,4 @@ def todatetime(value, fmts=None):
 
 
 templates.env.filters["todatetime"] = todatetime
+templates.env.filters["bitand"] = lambda value, other: int(value) & int(other)

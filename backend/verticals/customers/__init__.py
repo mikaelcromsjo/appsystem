@@ -7,6 +7,8 @@ admin_only = False
 hx_endpoint = "customers_list"   # FastAPI route name for url_for()
 content_div_id = "customer_content"
 
+role_defs = {"ADMIN": 0b0001}
+
 
 def get_routers():
     from verticals.customers import router

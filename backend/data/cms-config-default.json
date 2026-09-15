@@ -1,0 +1,123 @@
+{
+  "categories": {
+    "active": {
+      "name": "AKTIV",
+      "items": {
+        "active-key": "Viktig",
+        "active-loyal": "Trogen",
+        "active-frequent": "Kommer ofta",
+        "active-rare": "Kommer sällan",
+        "active-never": "Kommer aldrig"
+      }
+    },
+    "inactive": {
+      "name": "INAKTIV",
+      "items": {
+        "inactive-no-interest": "Vill inte vara med",
+        "inactive-never-comes": "Kommer aldrig",
+        "inactive-no-answer": "Svarar inte",
+        "inactive-nmr": "Medlem i NMR",
+        "inactive-too-far": "Bor för långt bort",
+        "inactive-deceased": "Död",
+        "inactive-nt-no-invite": "Nya Tider, vill ej ha inbjudningar",
+        "inactive-nt-silent": "Nya Tider, svarar inte"
+      }
+    },
+    "incoming": {
+      "name": "INKOMMANDE",
+      "items": {
+        "incoming-not-called": "Inte ringt",
+        "incoming-no-talk": "Ringt men inte talat med",
+        "incoming-talked": "Talat med",
+        "incoming-nt": "Nya Tider",
+        "incoming-new-cat": "Möjlighet att lägga in ny kategori"
+      }
+    },
+    "unwanted": {
+      "name": "OÖNSKAD",
+      "items": {
+        "unwanted-conflict": "Konfliktskapare",
+        "unwanted-skunk": "Skunk",
+        "unwanted-enemy": "Fiende",
+        "unwanted-security": "Säkerhetsrisk",
+        "unwanted-unstable": "Galen",
+        "unwanted-pc": "Politiskt korrekt",
+        "unwanted-old": "För gammal",
+        "unwanted-difficult": "För krånglig"
+      }
+    },
+    "other": {
+      "name": "ÖVRIG",
+      "items": {
+        "other-nt": "NYA TIDER",
+        "other-stand-up": "STÅ UPP FÖR SVERIGE"
+      }
+    }
+  },
+  "product_extras": {
+    "external":      {"label": "Extern",         "type": "bool", "filter": true},
+    "non_political": {"label": "Icke-politiskt", "type": "bool", "filter": true}
+  },
+  "products": {
+    "event": {
+      "name": "Event",
+      "items": {
+        "event-unpaid": "Ej Betald",
+        "event-paid": "Betald",
+        "event-pay-later": "Betalar senare",
+        "event-absent": "Deltog ej",
+        "event-attended": "Deltog"
+      },
+      "extra": {
+        "location": {"label": "Plats",    "type": "text",     "filter": true, "list": true},
+        "password": {"label": "Lösenord", "type": "password"}
+      }
+    },
+    "subscription": {
+      "name": "Prenumeration",
+      "items": {
+        "sub-unpaid": "Ej betald",
+        "sub-paid": "Betald",
+        "sub-expired": "Utgått"
+      },
+      "extra": {}
+    },
+    "membership": {
+      "name": "Medlemskap",
+      "items": {
+        "mem-unpaid": "Ej Betald",
+        "mem-paid": "Betald"
+      },
+      "extra": {}
+    }
+  },
+  "customer_extras": {
+    "code_name":  {"label": "Kodnamn",    "type": "bool", "filter": true},
+    "controlled": {"label": "Kontrollerad", "type": "bool", "filter": true}
+  },
+  "organisations": [
+    {"id": "nmr", "name": "NMR"},
+    {"id": "button-pusher", "name": "Knapptryckare"},
+    {"id": "sd", "name": "SD"},
+    {"id": "afs", "name": "AFS"},
+    {"id": "med", "name": "MED"},
+    {"id": "dfs", "name": "DFS"},
+    {"id": "mod", "name": "MOD"}
+  ],
+  "filters": [
+    {"id": "is_filter_1", "name": "Fester"},
+    {"id": "is_filter_2", "name": "AW"},
+    {"id": "is_filter_3", "name": "Föreläsningar"},
+    {"id": "is_filter_4", "name": "Aktivism"},
+    {"id": "is_filter_5", "name": "Konferenser"},
+    {"id": "is_filter_6", "name": "Medlemskap"},
+    {"id": "is_filter_7", "name": "Prenumeration"}
+  ],
+  "personalities": [
+    {"id": "new", "name": "Ny"},
+    {"id": "yellow", "name": "Gul"},
+    {"id": "blue", "name": "Blå"},
+    {"id": "red", "name": "Rod"},
+    {"id": "green", "name": "Grön"}
+  ]
+}

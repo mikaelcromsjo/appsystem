@@ -414,9 +414,11 @@ def customer_detail(
 # DELETE customer
 @router.post("/delete/{customer_id}", name="delete_customer")
 def delete_customer(customer_id: str, db: Session = Depends(get_db), user = Depends(get_current_user)):
+    from core.roles import user_has_role
+    from verticals.customers.roles import ADMIN as CUSTOMERS_ADMIN
 
-    if not user.admin:
-        return {"detail": f"Error. Only Admin can delete customers"}
+    if not user_has_role(user, "customers", CUSTOMERS_ADMIN):
+        return {"detail": f"Access denied"}
 
     customer = db.query(Customer).filter(Customer.id == customer_id).first()
     if not customer:

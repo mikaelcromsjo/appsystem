@@ -39,3 +39,27 @@ def get_current_superadmin(request: Request):
     if not request.session.get("is_superadmin"):
         raise HTTPException(status_code=403, detail="Superadmin access required")
     return request.session.get("global_user_id")
+
+
+def require_vertical_role(vertical_slug: str, role_bit: int):
+    """
+    Factory for per-vertical role-based access control.
+
+    Returns a FastAPI dependency that checks if the current user has the required
+    role in the specified vertical. Tenant admins (user.admin=1) bypass all checks.
+
+    Args:
+        vertical_slug: e.g. "invoices", "products"
+        role_bit: bitmask integer, e.g. 0b0001 for ADMIN role
+
+    Example:
+        @router.post("/invoices/create")
+        def create_invoice(..., user=Depends(require_vertical_role("invoices", ADMIN))):
+            ...
+    """
+    def _dependency(user=Depends(get_current_user)):
+        from core.roles import user_has_role
+        if not user_has_role(user, vertical_slug, role_bit):
+            raise HTTPException(status_code=403, detail="Access denied")
+        return user
+    return _dependency

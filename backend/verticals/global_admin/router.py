@@ -1,5 +1,8 @@
 import os
 import subprocess
+import json
+from pathlib import Path
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -11,12 +14,26 @@ from core.database import get_master_db, _get_tenant_engine
 from core.models.base import Base
 from models.master import GlobalUser, LoginToken, Tenant, UserTenant
 from templates import templates
+from data.constants import load_global_cms_config, GLOBAL_CMS_CONFIG_KEY
 
 router = APIRouter(
     prefix="/global-admin",
     tags=["global_admin"],
     dependencies=[Depends(get_current_superadmin)],
 )
+
+
+def _cms_context(cfg: dict) -> dict:
+    """Convert CMS config dict to template context with JSON strings."""
+    return {
+        "categories_json":      json.dumps(cfg["categories"],              indent=2, ensure_ascii=False),
+        "products_json":        json.dumps(cfg["products"],                indent=2, ensure_ascii=False),
+        "organisations_json":   json.dumps(cfg["organisations"],           indent=2, ensure_ascii=False),
+        "filters_json":         json.dumps(cfg["filters"],                 indent=2, ensure_ascii=False),
+        "personalities_json":   json.dumps(cfg["personalities"],           indent=2, ensure_ascii=False),
+        "product_extras_json":  json.dumps(cfg.get("product_extras", {}),  indent=2, ensure_ascii=False),
+        "customer_extras_json": json.dumps(cfg.get("customer_extras", {}), indent=2, ensure_ascii=False),
+    }
 
 
 # --- Dashboard ---
@@ -62,9 +79,21 @@ async def tenant_create(
 
     # Derive DB path from the default DB location, namespaced by slug
     default_db = os.environ.get("DATABASE_URL", "sqlite:///app.db")
-    if default_db.startswith("sqlite:///"):
-        db_path = default_db.rsplit("/", 1)[0] + f"/{slug}.db"
-        db_url = f"sqlite:///{db_path.lstrip('sqlite:///')}"
+    if default_db.startswith("sqlite://"):
+        # Extract the file path from sqlite:/// URL
+        # sqlite:///relative/path.db -> relative/path.db
+        # sqlite:///C:/absolute/path.db -> C:/absolute/path.db
+        file_path = default_db[10:]  # Remove 'sqlite:///'
+        db_file = Path(file_path)
+        db_dir = db_file.parent
+
+        # Ensure the directory exists
+        db_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create new tenant DB file path
+        new_db_file = db_dir / f"{slug}.db"
+        # Convert to forward slashes for SQLite URL format
+        db_url = f"sqlite:///{new_db_file.as_posix()}"
     else:
         # Postgres: use same server, different DB name — admin must create the DB manually
         db_url = default_db.rsplit("/", 1)[0] + f"/{slug}"
@@ -82,11 +111,12 @@ async def tenant_create(
     tenant_engine = _get_tenant_engine(db_url)
     Base.metadata.create_all(bind=tenant_engine)
 
-    # Seed default CMS config
+    # Seed CMS config from global defaults
     from data.constants import seed_cms_config
+    global_cfg = load_global_cms_config(master_db)
     tenant_db_seed = sessionmaker(bind=tenant_engine)()
     try:
-        seed_cms_config(tenant_db_seed)
+        seed_cms_config(tenant_db_seed, cfg=global_cfg)
     finally:
         tenant_db_seed.close()
 
@@ -329,6 +359,59 @@ async def global_admin_team_create(
     return templates.TemplateResponse(
         "global_admin/teams.html",
         {"request": request, "tenant": tenant, "teams": teams_data, "saved": True},
+    )
+
+
+# --- Global CMS Data ---
+
+@router.get("/data", response_class=HTMLResponse, name="global_admin_data")
+async def global_admin_data(request: Request, master_db: Session = Depends(get_master_db)):
+    cfg = load_global_cms_config(master_db)
+    return templates.TemplateResponse(
+        "global_admin/data.html",
+        {"request": request, **_cms_context(cfg)},
+    )
+
+
+@router.post("/data", response_class=HTMLResponse)
+async def save_global_data(
+    request: Request,
+    master_db: Session = Depends(get_master_db),
+    categories_text: str = Form(...),
+    products_text: str = Form(...),
+    organisations_text: str = Form(...),
+    filters_text: str = Form(...),
+    personalities_text: str = Form(...),
+    product_extras_text: str = Form(default="{}"),
+    customer_extras_text: str = Form(default="{}"),
+):
+    try:
+        cfg = {
+            "categories":      json.loads(categories_text),
+            "products":        json.loads(products_text),
+            "organisations":   json.loads(organisations_text),
+            "filters":         json.loads(filters_text),
+            "personalities":   json.loads(personalities_text),
+            "product_extras":  json.loads(product_extras_text),
+            "customer_extras": json.loads(customer_extras_text),
+        }
+    except json.JSONDecodeError as e:
+        return HTMLResponse(
+            f"<div class='text-red-700 bg-red-100 border border-red-400 px-4 py-3 rounded-md'>Invalid JSON: {e}</div>",
+            status_code=400,
+        )
+
+    from models.master import GlobalConfig
+    row = master_db.query(GlobalConfig).filter_by(key=GLOBAL_CMS_CONFIG_KEY).first()
+    if row:
+        row.value = json.dumps(cfg, ensure_ascii=False)
+    else:
+        master_db.add(GlobalConfig(key=GLOBAL_CMS_CONFIG_KEY, value=json.dumps(cfg, ensure_ascii=False)))
+    master_db.commit()
+
+    return templates.TemplateResponse(
+        "global_admin/data.html",
+        {"request": request, **_cms_context(cfg), "message": "Saved."},
     )
 
 

@@ -6,6 +6,8 @@ admin_only = False
 hx_endpoint = "companies_list"
 content_div_id = "companies_content"
 
+role_defs = {"ADMIN": 0b0001}
+
 
 def get_routers():
     from verticals.companies import router

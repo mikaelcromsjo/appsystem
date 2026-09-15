@@ -221,9 +221,11 @@ async def upsert_product(
     user = Depends(get_current_user),
     cms: CmsConfig = Depends(get_cms_config),
 ):
-    
-    if not user.admin:
-        raise HTTPException(status_code=401, detail="Error. Only Admin can edit products")
+    from core.roles import user_has_role
+    from verticals.products.roles import ADMIN as PRODUCTS_ADMIN
+
+    if not user_has_role(user, "products", PRODUCTS_ADMIN):
+        raise HTTPException(status_code=403, detail="Access denied")
 
     # make input dates utc
     update_data.start_date = local_to_utc(update_data.start_date)
@@ -272,9 +274,11 @@ async def upsert_product(
 # DELETE product
 @router.post("/delete/{product_id}", name="delete_product")
 def delete_product(product_id: str, db: Session = Depends(get_db), user = Depends(get_current_user)):
+    from core.roles import user_has_role
+    from verticals.products.roles import ADMIN as PRODUCTS_ADMIN
 
-    if not user.admin:
-        return {"detail": f"Error. Only Admin can delete products"}
+    if not user_has_role(user, "products", PRODUCTS_ADMIN):
+        return {"detail": f"Access denied"}
 
 
     product = db.query(Product).filter(Product.id == product_id).first()
