@@ -269,7 +269,7 @@
   "None": "None",
   "Roles": "Roles",
   "User Details": "User Details",
-  "No": "No",
+  "No": "Nej",
   "Make this user an admin": "Make this user an admin",
   "No roles assigned": "No roles assigned",
   "Edit Roles": "Edit Roles",
@@ -279,5 +279,6 @@
   "Click to remove": "Click to remove",
   "Set": "Set",
   "Add": "Add",
-  "Betalar på plats": "Betalar på plats"
+  "Betalar på plats": "Betalar på plats",
+  "Open in call mode?": "Öppna i samtalsläge?"
 }

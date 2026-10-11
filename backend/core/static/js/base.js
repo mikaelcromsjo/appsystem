@@ -1,7 +1,26 @@
-// === Mobile redirect ===
-if (/Mobi|Android/i.test(navigator.userAgent)) {
-  window.location.href = "/calls/number";
-}
+// === Mobile: offer call mode ===
+// Asked once per login: the answer is remembered in localStorage and login.html clears it
+// (logout renders login.html). Backdrop click and Escape count as "No".
+(function () {
+  const modal = document.getElementById('callmode_modal');
+  if (!modal || !/Mobi|Android/i.test(navigator.userAgent)) return;
+  if (localStorage.getItem('callModeAnswered')) return;
+
+  const answer = (openCallMode) => {
+    localStorage.setItem('callModeAnswered', '1');
+    modal.classList.add('hidden');
+    if (openCallMode) window.location.href = "/calls/number";
+  };
+  modal.classList.remove('hidden');
+  document.getElementById('callmode_yes').addEventListener('click', () => answer(true));
+  document.getElementById('callmode_no').addEventListener('click', () => answer(false));
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) answer(false);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !modal.classList.contains('hidden')) answer(false);
+  });
+})();
 
 // === Toolbox ===
 const toolboxToggle = document.getElementById('toolboxToggle');
@@ -461,7 +480,7 @@ function reloadCustomers() {
 
 function reloadProducts() {
   htmx.ajax('GET', '/products/', { target: '#product_content' });
-  htmx.ajax('GET', '/calls/products/', { target: '#calls-product-list' });
+  htmx.ajax('GET', '/calls/products_list', { target: '#calls-product-list' });
 }
 
 document.body.addEventListener('callsCustomersReload', reloadCallsCustomers);
@@ -595,5 +614,22 @@ document.addEventListener('keydown', function(e) {
     if (el && el.tabIndex >= 0 && typeof el.click === 'function') {
       el.click();
     }
+  }
+});
+
+
+// Table cells cut long text with "…" (see .full-table in base.html).
+// Show the full value as a tooltip when a cell is actually truncated.
+document.addEventListener('mouseover', (event) => {
+  const cell = event.target.closest && event.target.closest('.full-table td');
+  if (!cell || cell.contains(event.relatedTarget)) return;  // measure once, on entering the cell
+  if (cell.querySelector('button, input, select')) return;
+  if (cell.title && !cell.dataset.autoTitle) return;        // keep a title set by the template
+  if (cell.scrollWidth > cell.clientWidth) {
+    cell.title = cell.innerText.trim();
+    cell.dataset.autoTitle = '1';
+  } else if (cell.dataset.autoTitle) {
+    cell.removeAttribute('title');
+    delete cell.dataset.autoTitle;
   }
 });

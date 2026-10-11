@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
+from core.auth import get_current_user
 from core.database import get_db
 from templates import templates
 
@@ -19,9 +20,16 @@ from functions.customers import get_selected_ids, get_customers, get_user_custom
 
 router = APIRouter(prefix="/calls", tags=["calls"])
 
+
+def require_admin(user=Depends(get_current_user)):
+    if not user.admin:
+        raise HTTPException(status_code=403, detail="Access denied")
+    return user
+
+
 # Create Team
 @router.post("/admin/teams")
-def create_team(name: str, db: Session = Depends(get_db)):
+def create_team(name: str, db: Session = Depends(get_db), user=Depends(require_admin)):
     team = Team(name=name)
     db.add(team)
     db.commit()
@@ -30,12 +38,12 @@ def create_team(name: str, db: Session = Depends(get_db)):
 
 # List Teams
 @router.get("/admin/teams")
-def list_teams(db: Session = Depends(get_db)):
+def list_teams(db: Session = Depends(get_db), user=Depends(require_admin)):
     return db.query(Team).all()
 
 # Delete Team
 @router.delete("/admin/teams/{team_id}")
-def delete_team(team_id: int, db: Session = Depends(get_db)):
+def delete_team(team_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
     team = db.query(Team).get(team_id)
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")

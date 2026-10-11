@@ -120,7 +120,7 @@ async def customer_data(
     cms: CmsConfig = Depends(get_cms_config),
 ):
     
-    user_id = user.id
+    user_id = str(user.id)  # same key type as the websocket endpoint (JWT "sub")
 
     customer = db.query(Customer).filter(Customer.id == int(customer_id)).first()
     if not customer:
@@ -132,7 +132,7 @@ async def customer_data(
     user_data.setdefault(user_id, {})["number"] = customer.phone
     # Broadcast name and number to all connected Websockets frontend
     to_remove = []
-    for ws in active_connections.get(str(user_id), []):
+    for ws in active_connections.get(user_id, []):
         try:
             await ws.send_json(user_data[user_id])
         except RuntimeError:

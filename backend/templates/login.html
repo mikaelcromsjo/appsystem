@@ -14,6 +14,9 @@
     </div>
     {% endif %}
     
+    <!-- new login: ask about call mode again (see base.js) -->
+    <script>try { localStorage.removeItem('callModeAnswered'); } catch (e) {}</script>
+
     <form action="/login" method="post" class="space-y-5">
       <div>
         <label for="email" class="block text-sm font-medium text-gray-700">{{ "Email" | t }}</label>

@@ -31,7 +31,8 @@ docker compose up -d
 ```
 
 - App: `http://localhost:8070`
-- See `docs/CONFIG.md` for the full environment variable reference (`JWT_SECRET_KEY`, `SESSION_SECRET`, `APP_BASE_URL`, SMTP settings for 2FA emails, etc.)
+- Environment variables (`JWT_SECRET_KEY`, `SESSION_SECRET`, `APP_BASE_URL`, SMTP settings for 2FA emails, etc.) are read in `backend/core/config.py`; set them in `docker-compose.yml`
+- Demo logins: `docs/TEST_DATA.md`
 
 ## Building a new module
 
@@ -42,7 +43,7 @@ backend/verticals/<name>/
   templates/
 ```
 
-Restart — the module is discovered automatically, with roles applied. See `docs/PATTERNS_ADVANCED.md`.
+Restart — the module is discovered automatically, with roles applied. See `docs/ai/ARCHITECTURE.md`; developer and AI notes are indexed in `docs/ai/INDEX.md`.
 
 ---
 
