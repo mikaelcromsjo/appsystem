@@ -1,3 +1,6 @@
+> **Outdated.** This describes the first test data generator (teams `team_*`, logins `sales`, `m1admin`, …),
+> which has been replaced. See [docs/TEST_DATA.md](docs/TEST_DATA.md) for the current demo data and logins.
+
 # Test Data System Implementation Summary
 
 ## Overview

@@ -1,13 +1,5 @@
 # Claude Code — Project AI Instructions
 
-
-Make propper test data, all records filled with fake data that looka real. 2 tenatns, 6 users, 2 teams, one user admin of each team. One team has acces to the finansial aspect, the other the call center (both customers). 
-
-Add user to caller, add customers to callers.  create 10 test customers. Connect 8 customers to caller and leave 2 unassigned.
-   
-Fill at least 4 records of all tables with some type of user editable record, organisations, accounts, invoices, alarms, add customers to caller. calls of to customers (that that caller acces to) with different types with notes and selections connected to products. 6 products with different types. Fill all data that is needed for each record. Look at the edit.html to find fields to use (including extra field). 
-
-
 **CRM web app** — call center workflow, customer/product management, alarm reminders.
 
 **Stack:** FastAPI · Jinja2 + HTMX + Alpine.js · TailwindCSS (CDN) · SQLite/Postgres
@@ -32,6 +24,48 @@ Load when relevant:
 - [docs/CLAUDE_IMPLEMENTING.md](docs/CLAUDE_IMPLEMENTING.md) — code style, Python/Jinja rules, doc policy
 - [docs/CLAUDE_DEBUGGING.md](docs/CLAUDE_DEBUGGING.md) — debugging approach, error investigation
 - [docs/CLAUDE_REFERENCE.md](docs/CLAUDE_REFERENCE.md) — stack info, database policy
+
+## Dev knowledge (verified against the running app, 2026-10)
+
+**Runtime**
+- Container `appsystem`, port 8070, public at https://system.ia-ai.se. `backend/` is bind-mounted and uvicorn runs with `--reload`: saving any file under `backend/` restarts the app and re-runs startup (schema create, admin init, demo seed).
+- Databases live in the Docker volume at `/dbdata`: `master.db` (logins, tenants), `app.db` (tenant `default`), `<slug>.db` per extra tenant. Inspect with `docker exec -i appsystem python - <<'PY'` (`-i` is needed for stdin).
+- The session cookie is `https_only`: scripted logins against `http://localhost:8070` silently lose the session. Test against the https URL.
+- Routes that use `render()` return the full page shell unless the request has the header `HX-Request: true`.
+- Upsert endpoints take JSON (htmx `json-enc`), with extras as flat keys: `"extra.<key>": value`.
+- Run git as `devuser` (`runuser -u devuser -- git …`); as root it fails with "dubious ownership".
+
+**Auth and access**
+- Login is by email (`<input type="email">`); `GlobalUser` (master DB) holds the password, `User` (tenant DB) is linked by `global_user_id`, and `User.username` is the email.
+- One tenant → straight in; several → tenant picker. `Tenant.require_2fa` defaults to True and then emails a login link — it only works with SMTP configured.
+- `user.admin = 1` is tenant-wide and bypasses everything. Role bitmasks exist only for `customers`, `products`, `companies`, `invoices` and gate only some writes.
+- Every vertical tab is shown to every user (only `admin_only` / `superadmin_only` hide). `Tenant.enabled_verticals` is stored but not enforced.
+
+**What each list shows (non-admin)**
+| Tab | Filter |
+|---|---|
+| Customers | `Customer.assigned_user_id == user.id` |
+| Call Center | `Customer.team_id == user.team_id` |
+| Companies, Invoices | `team_id == user.team_id` |
+| Alarms | `team_id == user.team_id` (admins too) and `date >= today` by default |
+| Products | `end_date >= now - 5 days` — a product without `end_date` never lists |
+| Accounts | everything |
+
+**Data shapes the templates depend on**
+- `Call.status`: plain integer in a JSON column (`1` answer, `2` no answer, `3` outside). A list breaks the row colouring.
+- `ProductCustomer.status`: `1` interested, `2` not interested, `3` coming. `type_status` is an integer, so CMS product-type item ids must be numeric strings (`"4"`…`"7"`; totals exist for `s1`–`s7`).
+- CMS organisation and personality ids must be integers (templates look them up as ints). `data/cms-config-default.json` uses string ids, so with it those fields do not render.
+- `Invoice`: `extra.status` is a string (`"1"` processing, `"2"` OK, `"3"` cancelled) and must be set — the row template emits broken JS without it. `date` is required. `number` comes from the `InvoiceNumber` autoincrement when status becomes `"2"`. Rows: `extra.row = {"1": {description, price, qty}}`.
+- Invoice sender = the invoice's team: `team.name` plus address/VAT/bank fields in `team.extra`. `Company.extra.company_name` is what lists and PDFs show.
+- Invoice PDFs are written to `backend/pdfs/invoice_<id>.pdf` (tracked in git, not tenant-scoped) and regenerated on each PDF request.
+- Bool extras are stored as the string `"true"`; the JSON filter matches that, not JSON `true`.
+- Datetimes are naive UTC in the DB; show them with the `| date` filter (Europe/Stockholm).
+
+**Other**
+- CMS config is per tenant: table `config`, key `cms`. The global default is in `master.global_config`; new tenants copy it.
+- The `| t` filter adds unknown strings to `backend/core/lang/lang_sv.json` at runtime, so that tracked file gets modified just by rendering new labels.
+- The alarm scheduler only reads the default tenant DB and delivers over websocket.
+- Demo data: `backend/scripts/demo_data.py` + `generate_test_data.py --reset`; see `docs/TEST_DATA.md`.
 
 ## Code search
 
