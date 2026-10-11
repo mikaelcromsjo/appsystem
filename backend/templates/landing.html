@@ -131,6 +131,13 @@
     }
     .creds span { color: var(--color-primary); }
 
+    /* Screenshots */
+    .shots { max-width: 960px; margin: 0 auto; padding: 0 24px 64px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px 20px; }
+    .shots h2 { grid-column: 1 / -1; text-align: center; color: var(--color-text-primary); font-size: 1.3rem; font-weight: 600; }
+    .shot img { display: block; width: 100%; height: auto; border: 1px solid var(--color-border-primary); border-radius: var(--radius-md); }
+    .shot figcaption { margin-top: 10px; font-size: var(--font-size-xs); color: var(--color-text-tertiary); line-height: 1.6; }
+    .shot figcaption strong { display: block; color: var(--color-text-primary); font-size: var(--font-size-sm); font-weight: 600; margin-bottom: 2px; }
+
     footer {
       text-align: center; padding: 24px; border-top: 1px solid var(--color-border-primary);
       color: var(--color-text-tertiary); font-size: var(--font-size-xs); line-height: 1.9;
@@ -139,7 +146,7 @@
     @media (max-width: 768px) {
       .hero h1 { font-size: 2rem; }
       .hero { padding: 48px 20px 32px; }
-      .values, .steps, .features { grid-template-columns: 1fr; }
+      .values, .steps, .features, .shots { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -245,6 +252,34 @@
         <a href="/login" class="btn btn-primary">Try the app</a>
       </div>
     </div>
+  </div>
+
+  <div class="shots">
+    <h2>A look inside</h2>
+    <figure class="shot">
+      <a href="/static/images/landing/calls.png"><img src="/static/images/landing/calls.png" alt="Call Center screenshot" width="1280" height="800" loading="lazy"></a>
+      <figcaption><strong>Call Center</strong>The caller picks a customer and a product, sees earlier calls and their notes, and logs the outcome of the new call — all on one screen.</figcaption>
+    </figure>
+    <figure class="shot">
+      <a href="/static/images/landing/customer.png"><img src="/static/images/landing/customer.png" alt="Customer with history screenshot" width="1280" height="800" loading="lazy"></a>
+      <figcaption><strong>Customer with history</strong>Contact details, categories and tags, followed by every product the customer has said yes, no or "call back" to.</figcaption>
+    </figure>
+    <figure class="shot">
+      <a href="/static/images/landing/event.png"><img src="/static/images/landing/event.png" alt="Event detail screenshot" width="1280" height="800" loading="lazy"></a>
+      <figcaption><strong>Event detail</strong>An event with price, dates and venue, and the list of customers who are interested, booked, paid or attended.</figcaption>
+    </figure>
+    <figure class="shot">
+      <a href="/static/images/landing/invoice.png"><img src="/static/images/landing/invoice.png" alt="Invoice screenshot" width="1280" height="800" loading="lazy"></a>
+      <figcaption><strong>Invoice</strong>Company, dates, VAT, currency and invoice rows. An approved invoice gets the next number in the sequence and a PDF.</figcaption>
+    </figure>
+    <figure class="shot">
+      <a href="/static/images/landing/alarms.png"><img src="/static/images/landing/alarms.png" alt="Alarms and reminders screenshot" width="1280" height="800" loading="lazy"></a>
+      <figcaption><strong>Alarms &amp; reminders</strong>Upcoming follow-ups for the team, each tied to a customer and a product, with a reminder sent before it is due.</figcaption>
+    </figure>
+    <figure class="shot">
+      <a href="/static/images/landing/user.png"><img src="/static/images/landing/user.png" alt="User profile screenshot" width="1280" height="800" loading="lazy"></a>
+      <figcaption><strong>User profile</strong>Each user keeps their own contact and bank details up to date from the profile page.</figcaption>
+    </figure>
   </div>
 
   <footer>
