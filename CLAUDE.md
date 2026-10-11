@@ -24,4 +24,4 @@ Read [docs/ai/INDEX.md](docs/ai/INDEX.md) and load `docs/ai/ARCHITECTURE.md`. Th
 - `backend/routers/customers.py` is dead code; the live router is `backend/verticals/customers/router.py`.
 - Rendering pages modifies tracked files (`lang_sv.json`, `backend/pdfs/`). Check `git status` before committing.
 - Run git as `devuser`; as root it fails with "dubious ownership".
-- Search with `grep -rn`; ripgrep is not installed on the host or in the container. The host has `python3`, not `python`.
+- Search with `rg <pattern> .` (host only, in `~/.local/bin`; not in the container). Always give a path: without one `rg` reads stdin and hangs when scripted. `.rgignore` keeps it out of `node_modules`; add `--max-columns 200` when hits land in `tailwind.css`. The host has `python3`, not `python`.

@@ -42,7 +42,8 @@ every PDF request). Check `git status` before committing.
 
 ## Tooling that is missing
 
-- ripgrep and ast-grep are not installed on the host or in the container
-  (`/usr/bin/sg` is the unrelated shadow-utils tool). Use `grep -rn`.
+- ripgrep (`rg`) is installed for `devuser` only, at `~/.local/bin/rg`, not
+  system-wide and not in the container. ast-grep is not installed
+  (`/usr/bin/sg` is the unrelated shadow-utils tool).
 - `npx tailwindcss` fails with permission denied; call the CLI through node
   (command in [UI.md](UI.md)).
