@@ -81,12 +81,6 @@
 
     /* Hero */
     .hero { max-width: 720px; margin: 0 auto; padding: 88px 24px 48px; text-align: center; }
-    .badge {
-      display: inline-block; padding: 4px 14px; border-radius: var(--radius-pill);
-      background: var(--color-primary-bg); color: var(--color-primary);
-      font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase;
-      letter-spacing: 1.5px; margin-bottom: 20px;
-    }
     .hero h1 { font-size: 3rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 20px; line-height: 1.15; }
     .tagline { font-size: 1.15rem; color: var(--color-text-secondary); margin: 0 0 36px; font-weight: 300; line-height: 1.6; }
     .cta { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; }
@@ -152,7 +146,6 @@
 <body>
 
   <div class="hero">
-    <div class="badge">Live demo</div>
     <h1>AppSystem</h1>
     <p class="tagline">
       One platform for call center, invoicing, and team operations —
@@ -160,7 +153,6 @@
       snap in without touching the core.
     </p>
     <div class="cta">
-      <a href="/login" class="btn btn-primary">Try the live demo</a>
       <a href="https://github.com/mikaelcromsjo/appsystem" class="btn btn-ghost">View on GitHub</a>
     </div>
   </div>
@@ -242,14 +234,15 @@
   <div class="demo">
     <div class="card demo-panel">
       <h2>Try it yourself</h2>
-      <p>This is a live demo tenant, seeded with sample customers, products, calls, and invoices.</p>
+      <p>Log in to a tenant seeded with sample customers, products, calls, and invoices.</p>
       <div class="creds">
         <div>call center: <span>sales@nordljus.example</span></div>
         <div>invoicing: <span>finance@nordljus.example</span></div>
+        <div>call center + invoicing: <span>partner@nordljus.example</span></div>
         <div>password: <span>1234</span></div>
       </div>
       <div>
-        <a href="/login" class="btn btn-primary">Log in to the demo</a>
+        <a href="/login" class="btn btn-primary">Try the app</a>
       </div>
     </div>
   </div>

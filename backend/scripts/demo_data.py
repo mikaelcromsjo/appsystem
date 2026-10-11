@@ -22,6 +22,7 @@ LEGACY_EMAILS = ["m1admin@x", "m2admin@x", "sales@x", "support@x", "finance@x", 
 ROLE_ADMIN = 0b0001
 CALLER_ROLES = {"customers": ROLE_ADMIN, "products": ROLE_ADMIN}
 FINANCE_ROLES = {"customers": ROLE_ADMIN, "companies": ROLE_ADMIN, "invoices": ROLE_ADMIN}
+ALL_ROLES = {**CALLER_ROLES, **FINANCE_ROLES}
 
 # ProductCustomer.status
 INTERESTED, NOT_INTERESTED, COMING = 1, 2, 3
@@ -218,6 +219,14 @@ NORDLJUS = {
             "bankgiro": "5051-6822", "plusgiro": "47 11 02-5",
             "note": "Betalningsvillkor 30 dagar netto. Dröjsmålsränta enligt räntelagen.",
         }},
+        # Calls its own customers and invoices them itself — the login that shows both sides.
+        {"key": "partner", "name": "Partnerförsäljning", "account": "event", "extra": {
+            **_address("Sveavägen 98", "Plan 3", "113 50", "Stockholm"),
+            "vat_number": "SE559812345601",
+            "bank_name": "Handelsbanken", "iban": "SE72 6000 0000 0005 4910 0147", "bic": "HANDSESS",
+            "bankgiro": "5051-6830", "plusgiro": "",
+            "note": "Betalningsvillkor 30 dagar netto.",
+        }},
     ],
 
     "users": [
@@ -245,6 +254,10 @@ NORDLJUS = {
          "extra": _user_extra("Maria", "Sandberg", "Lötsjövägen 5, 174 43 Sundbyberg",
                               "maria.sandberg@nordljus.example", "+46701740616",
                               "Länsförsäkringar Bank", "ELLFSESS", "9023", "33 507 194")},
+        {"email": "partner@nordljus.example", "admin": 0, "team": "partner", "roles": ALL_ROLES,
+         "extra": _user_extra("Linnea", "Åkesson", "Tegnérgatan 18, 113 58 Stockholm",
+                              "partner@nordljus.example", "+46701740617",
+                              "Nordea", "NDEASESS", "3145", "910 227 4418")},
     ],
 
     "products": [
@@ -361,6 +374,30 @@ NORDLJUS = {
          "sub_caller": "", "organisations": ["1"], "categories": ["prospect-new", "seg-business"],
          "personality_type": 1, "filters": [5], "tags": ["webbformulär"],
          "extra": {"gdpr_consent": "true"}},
+        {"key": "camilla", "user_id": "NL-10561", "first_name": "Camilla", "last_name": "Wikström",
+         "email": "camilla.wikstrom@malardalenenergi.example", "phone": "+46701740631",
+         "description_phone": "Mobil, helst förmiddag", "location": "Västerås", "contributes": 5,
+         "team": "partner", "assigned": "partner@nordljus.example",
+         "comment": "Marknadschef på Mälardalen Energi. Sponsrar höstminglet och vill ha monter på Mediedagarna.",
+         "sub_caller": "Linnea", "organisations": ["1", "5"], "categories": ["active-key", "seg-business"],
+         "personality_type": 4, "filters": [1, 5, 7], "tags": ["sponsor", "VIP"],
+         "extra": {"newsletter": "true", "gdpr_consent": "true"}},
+        {"key": "david", "user_id": "NL-10562", "first_name": "David", "last_name": "Engström",
+         "email": "david.engstrom@gotareklam.example", "phone": "+46701740632",
+         "description_phone": "Mobil", "location": "Göteborg", "contributes": 3,
+         "team": "partner", "assigned": "partner@nordljus.example",
+         "comment": "Byråchef. Köper konferenspass åt hela byrån varje år, vill ha en faktura per beställning.",
+         "sub_caller": "Linnea", "organisations": ["1"], "categories": ["active-frequent", "seg-business"],
+         "personality_type": 2, "filters": [2, 5], "tags": ["gruppbokning"],
+         "extra": {"newsletter": "true", "gdpr_consent": "true"}},
+        {"key": "ylva", "user_id": "NL-10563", "first_name": "Ylva", "last_name": "Forsberg",
+         "email": "ylva.forsberg@forsbergform.example", "phone": "+46701740633",
+         "description_phone": "Arbete", "location": "Stockholm", "contributes": None,
+         "team": "partner", "assigned": "partner@nordljus.example",
+         "comment": "Ny kontakt via Camilla. Nyfiken på utställarplats men har inte bestämt sig.",
+         "sub_caller": "Linnea", "organisations": ["5"], "categories": ["prospect-new", "seg-business"],
+         "personality_type": 1, "filters": [5, 7], "tags": ["utställare"],
+         "extra": {"gdpr_consent": "true"}},
     ],
 
     # (customer, product, status, type_status, order placed days-from-today)
@@ -385,6 +422,10 @@ NORDLJUS = {
         ("elin", "magasin", COMING, 5, -30),
         ("henrik", "magasin", NOT_INTERESTED, None, None),
         ("henrik", "hostmingel", NOT_INTERESTED, None, None),
+        ("camilla", "hostmingel", COMING, 4, -20),
+        ("camilla", "mediedagar", INTERESTED, None, None),
+        ("david", "mediedagar", COMING, 4, -7),
+        ("ylva", "mediedagar", INTERESTED, None, None),
     ],
 
     # (customer, team, when, status, note)
@@ -414,6 +455,15 @@ NORDLJUS = {
          "Anmäld till skrivarkursen, faktura skickad. Söker stipendium för kursavgiften."),
         ("henrik", "kundtjanst", (-60, 13, 15), ANSWER,
          "Vill inte förnya och inte bli kontaktad igen. Markerad som avböjt utskick."),
+        ("camilla", "partner", (-20, 10, 30), ANSWER,
+         "Klart med sponsorpaketet till höstminglet. Faktura till Mälardalen Energi, referens CW-2291."),
+        ("camilla", "partner", (-4, 9, 15), ANSWER,
+         "Vill ha offert på monter 9 kvm till Mediedagarna. Tipsade om Ylva Forsberg på Forsberg Form."),
+        ("david", "partner", (-7, 14, 0), ANSWER,
+         "Beställde sex konferenspass till Mediedagarna. Faktura skickas när deltagarlistan är klar."),
+        ("ylva", "partner", (-3, 15, 40), NO_ANSWER, "Inget svar, skickade mejl med utställarinformation."),
+        ("ylva", "partner", (-1, 11, 10), ANSWER,
+         "Läst utställarinformationen. Vill se planritning innan hon bestämmer sig."),
     ],
 
     # (customer, product, team, when, reminder minutes before, note)
@@ -430,6 +480,10 @@ NORDLJUS = {
          "Skicka programmet för Mediedagarna och ring dagen efter."),
         ("larsgoran", "medlemskap", "kundtjanst", (120, 10, 0), 1440,
          "Påminn om förnyelse av årsmedlemskapet i god tid."),
+        ("camilla", "mediedagar", "partner", (3, 9, 30), 30,
+         "Skicka montersofferten och ring Camilla samma dag."),
+        ("ylva", "mediedagar", "partner", (6, 14, 0), 60,
+         "Följ upp planritningen – har Ylva bestämt sig för utställarplats?"),
     ],
 
     "companies": [
@@ -463,6 +517,18 @@ NORDLJUS = {
          "extra": {"company_name": "Norrlands Sparbank", "org_nr": "5980117734",
                    **_address("Storgatan 50", "", "903 26", "Umeå"),
                    "cc_email": ""}},
+        {"key": "malardalen", "team": "partner", "first_name": "Camilla", "last_name": "Wikström",
+         "email": "camilla.wikstrom@malardalenenergi.example", "phone": "+46846500433",
+         "comment": "Sponsor och utställare. Ange alltid referens CW-2291 på fakturan.",
+         "extra": {"company_name": "Mälardalen Energi AB", "org_nr": "5564218830",
+                   **_address("Kopparlundsvägen 7", "", "721 30", "Västerås"),
+                   "cc_email": "faktura@malardalenenergi.example"}},
+        {"key": "gotareklam", "team": "partner", "first_name": "David", "last_name": "Engström",
+         "email": "david.engstrom@gotareklam.example", "phone": "+46313900624",
+         "comment": "Reklambyrå. En faktura per beställning, deltagarnamn i noteringen.",
+         "extra": {"company_name": "Göta Reklambyrå AB", "org_nr": "5591063347",
+                   **_address("Magasinsgatan 19", "", "411 18", "Göteborg"),
+                   "cc_email": ""}},
     ],
 
     # date / due are days from today; rows are (description, price, qty)
@@ -493,6 +559,16 @@ NORDLJUS = {
         {"company": "bergstrom", "team": "ekonomi", "date": 0, "due": 30, "status": PROCESSING,
          "vat": "25", "currency": "SEK", "note": "Annonsering kvartal 3.",
          "rows": [("Helsidesannons Nordljus Magasin nr 7–9", "18500", "3")]},
+        {"company": "malardalen", "team": "partner", "date": -19, "due": 11, "status": OK,
+         "vat": "25", "currency": "SEK", "note": "Referens CW-2291. Sponsorpaket enligt överenskommelse.",
+         "rows": [("Sponsorpaket höstmingel, logotyp i program", "15000", "1"),
+                  ("Biljetter höstmingel", "395", "8")]},
+        {"company": "gotareklam", "team": "partner", "date": -5, "due": 25, "status": OK,
+         "vat": "25", "currency": "SEK", "note": "Sex deltagare, namnlista bifogas separat.",
+         "rows": [("Konferenspass Nordiska Mediedagarna", "4900", "6")]},
+        {"company": "malardalen", "team": "partner", "date": 0, "due": 30, "status": PROCESSING,
+         "vat": "25", "currency": "SEK", "note": "Referens CW-2291. Inväntar godkänd offert.",
+         "rows": [("Utställarplats Nordiska Mediedagarna, 9 kvm", "24000", "1")]},
     ],
 }
 

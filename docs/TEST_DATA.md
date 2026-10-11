@@ -40,8 +40,9 @@ rejects anything that is not an email address). Both demo tenants have 2FA off.
 | `finance@nordljus.example` | Oskar Dahl | Ekonomi | no | customers, companies, invoices | Nordljus |
 | `maria.sandberg@nordljus.example` | Maria Sandberg | Ekonomi | no | customers, companies, invoices | Nordljus |
 | `karin.ekstrom@nordljus.example` | Karin Ekström | Ekonomi | **yes** | customers, companies, invoices | Nordljus + Fjällvind |
+| `partner@nordljus.example` | Linnea Åkesson | Partnerförsäljning | no | customers, products, companies, invoices | Nordljus |
 
-`sales@…` and `finance@…` are the two logins shown on the landing page. Anna and
+`sales@…`, `finance@…` and `partner@…` are the logins shown on the landing page. Anna and
 Karin belong to both tenants, so they get the tenant picker after login.
 `admin@localhost` (superadmin, from `ADMIN_EMAIL`) has access to both tenants.
 
@@ -52,6 +53,9 @@ What each kind of user sees:
   Companies and Invoices are empty, since those belong to team Ekonomi.
 - **Non-admin finance** (`finance`): Companies and Invoices of team Ekonomi.
   No customers or alarms.
+- **Non-admin with both** (`partner`): team Partnerförsäljning owns its own customers
+  (3, all assigned to her), alarms (2), companies (2) and invoices (3), so every tab
+  has content without admin rights.
 - **Admin** (`anna`, `karin`): everything in the tenant, plus the Admin tab.
 
 ## Tenant 1 — Nordljus Media AB (slug `default`)
@@ -62,15 +66,15 @@ with a call center team and a finance team.
 | Table | Count | Notes |
 |-------|-------|-------|
 | Accounts | 4 | Nordljus Media AB, Event, Förlag, Stipendiestiftelse — address, VAT and bank details filled |
-| Teams | 2 (+ `Admin`) | Kundtjänst, Ekonomi — `extra` holds the sender details printed on invoices |
-| Users | 6 | see above; profile and bank details filled |
+| Teams | 3 (+ `Admin`) | Kundtjänst, Ekonomi, Partnerförsäljning — `extra` holds the sender details printed on invoices |
+| Users | 7 | see above; profile and bank details filled |
 | Products | 6 | 3 events, 1 subscription, 1 membership, 1 course — all with type extras and filters |
-| Customers | 10 | 8 in team Kundtjänst (6 assigned to `sales`, 2 to `jonas.berg`), 2 unassigned (Sofia Bergqvist, Viktor Nordin) |
-| Product selections | 20 | interested / not interested / coming, with type status and order date |
-| Calls | 14 | answered, no answer and outside calls, with notes |
-| Alarms | 6 | all upcoming, each tied to a customer and a product |
-| Companies | 5 | Swedish and one Danish, with contact, address and org number |
-| Invoices | 7 | 4 OK, 1 cancelled, 2 processing; SEK and EUR; 1–2 rows each |
+| Customers | 13 | 8 in team Kundtjänst (6 assigned to `sales`, 2 to `jonas.berg`), 3 in Partnerförsäljning (`partner`), 2 unassigned (Sofia Bergqvist, Viktor Nordin) |
+| Product selections | 24 | interested / not interested / coming, with type status and order date |
+| Calls | 19 | answered, no answer and outside calls, with notes |
+| Alarms | 8 | all upcoming, each tied to a customer and a product |
+| Companies | 7 | Swedish and one Danish, with contact, address and org number |
+| Invoices | 10 | 6 OK, 1 cancelled, 3 processing; SEK and EUR; 1–2 rows each |
 | Tags | 12 | also in the tag tables, for autocomplete |
 
 ## Tenant 2 — Fjällvind Event AB (slug `fjallvind`)
