@@ -42,8 +42,7 @@ every PDF request). Check `git status` before committing.
 
 ## Tooling that is missing
 
-- `.claude-search/search.py` needs ripgrep and ast-grep; neither is installed on
-  the host or in the container (`/usr/bin/sg` is the unrelated shadow-utils tool).
-  Use `grep -rn` until they are installed.
+- ripgrep and ast-grep are not installed on the host or in the container
+  (`/usr/bin/sg` is the unrelated shadow-utils tool). Use `grep -rn`.
 - `npx tailwindcss` fails with permission denied; call the CLI through node
   (command in [UI.md](UI.md)).
